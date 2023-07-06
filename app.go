@@ -33,7 +33,7 @@ type Application struct {
 	cancel   context.CancelFunc
 	logger   *zap.Logger
 	logCnf   *logger.Config
-	err      error
+	errs     []error
 	debugger debug.Debugger
 	servers  map[servertype.ServerType]map[string]Server
 	event    *event.Manger
@@ -44,6 +44,7 @@ type Application struct {
 
 // New return a new application
 func New(id, name string, options ...Option) *Application {
+	var err error
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &Application{
 		id:       id,
@@ -56,7 +57,8 @@ func New(id, name string, options ...Option) *Application {
 		regTtl:   5,
 	}
 	s.With(options...)
-	s.logger, s.err = logger.New(utils.ToStr("App[", name, "]"), s.logCnf, s.debugger.Debug())
+	s.logger, err = logger.New(utils.ToStr("App[", name, "]"), s.logCnf, s.debugger.Debug())
+	s.addErr(err)
 	s.logger.Info("init")
 	return s
 }
@@ -156,8 +158,8 @@ func (app *Application) Run(failedCb func(err error)) {
 		failedCb(errors.New("id or name invalid"))
 		return
 	}
-	if app.err != nil {
-		failedCb(app.err)
+	if len(app.errs) > 0 {
+		failedCb(app.errs[0])
 		return
 	}
 	app.debug("init event manager")
@@ -173,6 +175,21 @@ func (app *Application) Run(failedCb func(err error)) {
 	if len(app.children) > 0 {
 		for _, sub := range app.children {
 			sub.With(Context(app.ctx))
+			if sub.debugger == nil {
+				sub.debugger = app.debugger
+			}
+			if sub.logger == nil {
+				sub.logger = app.logger
+			}
+			if sub.logCnf == nil {
+				sub.logCnf = app.logCnf
+			}
+			if sub.register == nil {
+				sub.register = app.register
+			}
+			if sub.regTtl <= 0 {
+				sub.regTtl = app.regTtl
+			}
 			app.debug("run sub application:" + sub.name)
 			go func(subApp *Application) {
 				subApp.Run(failedCb)
@@ -261,4 +278,14 @@ func (app *Application) debug(msg string) {
 	if app.debugger.Debug() {
 		app.logger.Debug(msg)
 	}
+}
+
+func (app *Application) addErr(err error) {
+	if err != nil {
+		app.errs = append(app.errs, err)
+	}
+}
+
+func (app *Application) Errs() []error {
+	return app.errs
 }
