@@ -30,7 +30,9 @@ func Logger(config *logger.Config) Option {
 	return func(s *Application) {
 		if config != nil {
 			s.logCnf = config
-			s.logger, s.err = logger.New(utils.ToStr("App[", s.name, "]"), s.logCnf, s.debugger.Debug())
+			var err error
+			s.logger, err = logger.New(utils.ToStr("App[", s.name, "]"), s.logCnf, s.debugger.Debug())
+			s.addErr(err)
 		}
 	}
 }
@@ -58,12 +60,12 @@ func EtcdRegister(endpoints []string, opeTimeout time.Duration) Option {
 			opeTimeout = 5 * time.Second
 		}
 		if len(endpoints) == 0 {
-			s.err = errors.New("etcd endpoint required")
+			s.addErr(errors.New("etcd endpoint required"))
 			return
 		}
 		etcdReg, err := regCenter.NewEtcdRegister(endpoints, opeTimeout)
 		if err != nil {
-			s.err = utils.NewWrappedError("new etcd register failed", err)
+			s.addErr(utils.NewWrappedError("new etcd register failed", err))
 			return
 		}
 		s.debug("try set etcd register")
