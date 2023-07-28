@@ -18,9 +18,10 @@ type Handler struct {
 
 // Event the event target
 type Event struct {
-	Topic   string
-	Data    []interface{}
-	manager *Manger
+	Topic    string
+	Data     []interface{}
+	manager  *Manger
+	provider func() *Manger
 }
 
 // Init managed event
@@ -54,10 +55,17 @@ func (m *Manger) Fire(e *Event) {
 
 // NewEvent return a new event
 func (m *Manger) NewEvent(topic string, data []interface{}) *Event {
+	return NewEvent(topic, data, func() *Manger {
+		return m
+	})
+}
+
+func NewEvent(topic string, data []interface{}, manager func() *Manger) *Event {
 	return &Event{
-		Topic:   topic,
-		Data:    data,
-		manager: m,
+		Topic:    topic,
+		Data:     data,
+		manager:  nil,
+		provider: manager,
 	}
 }
 
@@ -68,5 +76,8 @@ func New() *Manger {
 
 // Fire to fire event
 func (e *Event) Fire() {
+	if e.manager == nil {
+		e.manager = e.provider()
+	}
 	e.manager.Fire(e)
 }

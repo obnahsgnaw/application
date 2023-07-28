@@ -99,3 +99,6 @@ func mergeMap(m map[string]string, m1 ...map[string]string) map[string]string {
 
 	return m
 }
+
+// TODO 注册
+// TODO 单独注册服务
