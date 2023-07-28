@@ -81,3 +81,15 @@ func (e *Event) Fire() {
 	}
 	e.manager.Fire(e)
 }
+
+type Builder struct {
+	provider func() *Manger
+}
+
+func NewBuilder(manager func() *Manger) *Builder {
+	return &Builder{provider: manager}
+}
+
+func (b *Builder) Build(topic string, data ...interface{}) *Event {
+	return NewEvent(topic, data, b.provider)
+}
