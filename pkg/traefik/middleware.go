@@ -461,7 +461,9 @@ type AuthTls struct {
 func NewHttpAuth(name string, conf AuthConf) (m HttpMiddleware) {
 	m.name = name
 	m.kvs = make(map[string]string)
-	m.kvs[EtcdKey(httpMidPrefix, name, "forwardAuth/address")] = conf.Address
+	if conf.Address != "" {
+		m.kvs[EtcdKey(httpMidPrefix, name, "forwardAuth/address")] = conf.Address
+	}
 	for i, k := range conf.RequestHeaders {
 		m.kvs[EtcdKey(httpMidPrefix, name, "forwardAuth/authRequestHeaders", strconv.Itoa(i))] = k
 	}
@@ -485,6 +487,22 @@ func NewHttpAuth(name string, conf AuthConf) (m HttpMiddleware) {
 		}
 		m.kvs[EtcdKey(httpMidPrefix, name, "forwardAuth/tls/caOptional")] = BoolVal(conf.Tls.CaOptional)
 		m.kvs[EtcdKey(httpMidPrefix, name, "forwardAuth/tls/insecureSkipVerify")] = BoolVal(conf.Tls.InsecureSkipVerify)
+	}
+	return
+}
+
+/*
+traefik/http/middlewares/Middleware09/forwardBody/requestAddress	http://xxxx
+traefik/http/middlewares/Middleware09/forwardBody/responseAddress	http://xxxx
+*/
+func NewForwardBody(name, rqAddr, rpAddr string) (m HttpMiddleware) {
+	m.name = name
+	m.kvs = make(map[string]string)
+	if rqAddr != "" {
+		m.kvs[EtcdKey(httpMidPrefix, name, "forwardBody/requestAddress")] = rqAddr
+	}
+	if rpAddr != "" {
+		m.kvs[EtcdKey(httpMidPrefix, name, "forwardBody/responseAddress")] = rpAddr
 	}
 	return
 }

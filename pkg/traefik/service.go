@@ -60,6 +60,10 @@ func NewHttpService(serviceName string, serverHosts []string, passHostHeader boo
 	}
 }
 
+func NewHttpServiceServerKey(serviceName string, index int) string {
+	return EtcdKey(httpServicePrefix, serviceName, "loadBalancer/servers", strconv.Itoa(index), "url")
+}
+
 /*
 traefik/tcp/services/TCPService01/loadBalancer/proxyProtocol/version	42
 traefik/tcp/services/TCPService01/loadBalancer/servers/0/address	foobar
@@ -98,6 +102,9 @@ func NewTcpService(serviceName string, serverHosts []string, proxyProtocolVersio
 		kvs:  kvs,
 	}
 }
+func NewTcpServiceServerKey(serviceName string, index int) string {
+	return EtcdKey(TcpServicePrefix, serviceName, "loadBalancer/servers", strconv.Itoa(index), "address")
+}
 
 /*
 traefik/udp/services/UDPService01/loadBalancer/servers/0/address	foobar
@@ -126,6 +133,10 @@ func NewUdpService(serviceName string, serverHosts []string, weightService []Wei
 		typ:  TypTcp,
 		kvs:  kvs,
 	}
+}
+
+func NewUdpServiceServerKey(serviceName string, index int) string {
+	return EtcdKey(udpServicePrefix, serviceName, "loadBalancer/servers", strconv.Itoa(index), "address")
 }
 
 func (s *Service) SetHealthCheck(followRedirects bool, headers map[string]string, hostname string, interval int, path string, port int, scheme string, timeout int) {
