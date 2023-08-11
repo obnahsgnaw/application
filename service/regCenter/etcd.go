@@ -46,3 +46,7 @@ func (e *EtcdRegister) Watch(ctx context.Context, keyPrefix string, handler func
 	e.register.WatchSimpleServer(ctx, keyPrefix, handler)
 	return nil
 }
+
+func (e *EtcdRegister) Etcd() *registercenter.EtcdRegister {
+	return e.register
+}
