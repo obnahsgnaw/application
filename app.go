@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/obnahsgnaw/application/endtype"
 	"github.com/obnahsgnaw/application/pkg/debug"
+	"github.com/obnahsgnaw/application/pkg/dynamic"
 	"github.com/obnahsgnaw/application/pkg/logging/logger"
 	"github.com/obnahsgnaw/application/pkg/signals"
 	"github.com/obnahsgnaw/application/pkg/utils"
@@ -47,14 +48,16 @@ func New(id, name string, options ...Option) *Application {
 	var err error
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &Application{
-		id:       id,
-		name:     name,
-		ctx:      ctx,
-		cancel:   cancel,
-		debugger: debug.New(false),
-		event:    event.New(),
-		servers:  make(map[servertype.ServerType]map[string]Server),
-		regTtl:   5,
+		id:     id,
+		name:   name,
+		ctx:    ctx,
+		cancel: cancel,
+		debugger: debug.New(dynamic.NewBool(func() bool {
+			return false
+		})),
+		event:   event.New(),
+		servers: make(map[servertype.ServerType]map[string]Server),
+		regTtl:  5,
 	}
 	s.With(options...)
 	s.logger, err = logger.New(utils.ToStr("App[", name, "]"), s.logCnf, s.debugger.Debug())
