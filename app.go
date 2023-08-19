@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"errors"
 	"github.com/obnahsgnaw/application/endtype"
 	"github.com/obnahsgnaw/application/pkg/debug"
 	"github.com/obnahsgnaw/application/pkg/dynamic"
@@ -24,8 +23,8 @@ type Server interface {
 	Release()
 }
 
-func applicationError(msg string) error {
-	return errors.New("application error: " + msg)
+func applicationError(msg string, err error) error {
+	return utils.TitledError("application error", msg, err)
 }
 
 // application -->  server -->  end-type --> service
@@ -162,7 +161,7 @@ func (app *Application) GetTypeServer(typ servertype.ServerType, id string) (Ser
 // Run application
 func (app *Application) Run(failedCb func(err error)) {
 	if app.id == "" || app.name == "" {
-		failedCb(applicationError("id or name invalid"))
+		failedCb(applicationError("id or name invalid", nil))
 		return
 	}
 	if len(app.errs) > 0 {

@@ -2,8 +2,8 @@ package locker
 
 import (
 	"context"
-	"errors"
 	"github.com/go-redis/redis/v8"
+	"github.com/obnahsgnaw/application/pkg/utils"
 	"strconv"
 	"time"
 )
@@ -23,7 +23,7 @@ type RedisDistributedLocker struct {
 }
 
 func lockerErr(msg string) error {
-	return errors.New("Redis locker error: " + msg)
+	return utils.TitledError("redis locker error", msg, nil)
 }
 
 func NewRedisDistributedLocker(client *redis.Client, key string, ttl time.Duration) (*RedisDistributedLocker, error) {

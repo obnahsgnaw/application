@@ -59,12 +59,12 @@ func EtcdRegister(endpoints []string, opeTimeout time.Duration) Option {
 			opeTimeout = 5 * time.Second
 		}
 		if len(endpoints) == 0 {
-			s.addErr(applicationError("etcd endpoint required"))
+			s.addErr(applicationError("etcd endpoint required", nil))
 			return
 		}
 		etcdReg, err := regCenter.NewEtcdRegister(endpoints, opeTimeout)
 		if err != nil {
-			s.addErr(applicationError(utils.NewWrappedError("new etcd register failed", err).Error()))
+			s.addErr(applicationError("new etcd register failed", err))
 			return
 		}
 		s.debug("try set etcd register")

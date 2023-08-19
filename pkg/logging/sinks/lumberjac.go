@@ -1,8 +1,8 @@
 package sinks
 
 import (
-	"errors"
 	"github.com/obnahsgnaw/application/pkg/logging/writer"
+	"github.com/obnahsgnaw/application/pkg/utils"
 	"go.uber.org/zap"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"net/url"
@@ -12,7 +12,7 @@ import (
 var lumberjackReged bool
 
 func lumberjacSinkErr(msg string) error {
-	return errors.New("lumberjack sink register error: " + msg)
+	return utils.TitledError("lumberjack sink reg error", msg, nil)
 }
 
 type SizedFileLog struct {

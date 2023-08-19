@@ -6,7 +6,6 @@ import (
 	"crypto/cipher"
 	"crypto/des"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"sync"
 )
@@ -24,8 +23,8 @@ AES主要有五种工作模式(其实还有很多模式) ：
 
 var (
 	EsEncoding        = base64.StdEncoding
-	ErrIvLengthError  = errors.New(fmt.Sprintf("security error: iv size error, aes=%d, des=%d", aes.BlockSize, des.BlockSize))
-	ErrModeNotSupport = errors.New("security error: mode not support now. ")
+	ErrIvLengthError  = SecErr(fmt.Sprintf("security error: iv size error, aes=%d, des=%d", aes.BlockSize, des.BlockSize))
+	ErrModeNotSupport = SecErr("mode not support now")
 )
 
 //AES-128：key长度16 字节

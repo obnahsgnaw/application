@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"errors"
 	"github.com/obnahsgnaw/application/pkg/logging"
 	"github.com/obnahsgnaw/application/pkg/logging/sinks"
 	"github.com/obnahsgnaw/application/pkg/logging/writer"
@@ -86,7 +85,7 @@ func NewErrorWriter(cnf *Config, debug bool) (w io.Writer) {
 }
 
 func loggerError(msg string) error {
-	return errors.New("logger error: " + msg)
+	return utils.TitledError("logger error", msg, nil)
 }
 
 func NewFileLogger(name string, cnf *Config, develop bool) (l *zap.Logger, err error) {
