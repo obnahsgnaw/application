@@ -24,6 +24,10 @@ type Server interface {
 	Release()
 }
 
+func applicationError(msg string) error {
+	return errors.New("application error: " + msg)
+}
+
 // application -->  server -->  end-type --> service
 
 // Application identify a project
@@ -158,7 +162,7 @@ func (app *Application) GetTypeServer(typ servertype.ServerType, id string) (Ser
 // Run application
 func (app *Application) Run(failedCb func(err error)) {
 	if app.id == "" || app.name == "" {
-		failedCb(errors.New("id or name invalid"))
+		failedCb(applicationError("id or name invalid"))
 		return
 	}
 	if len(app.errs) > 0 {

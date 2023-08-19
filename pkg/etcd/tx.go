@@ -24,7 +24,7 @@ func Puts(ctx context.Context, c *clientv3.Client, kvs map[string]string, leaseI
 		return err
 	}
 	if !txnRes.Succeeded {
-		return errors.New("tx put failed")
+		return errors.New("etcd error: tx put failed")
 	}
 
 	return nil

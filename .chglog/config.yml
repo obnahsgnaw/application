@@ -9,14 +9,14 @@ options:
        Type:
          - feat
          - fix
-    #     - perf
-    #     - refactor
+         - perf
+         - refactor
   commit_groups:
      title_maps:
        feat: Features
        fix: Bug Fixes
-    #   perf: Performance Improvements
-    #   refactor: Code Refactoring
+       perf: Performance Improvements
+       refactor: Code Refactoring
   header:
     pattern: "^(\\w*)(?:\\(([\\w\\$\\.\\-\\*\\s]*)\\))?\\:\\s(.*)$"
     pattern_maps:
