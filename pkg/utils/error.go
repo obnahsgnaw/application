@@ -13,3 +13,11 @@ func NewWrappedError(msg string, err error) error {
 
 	return fmt.Errorf(msg+" %w", err)
 }
+
+func TitledError(title, msg string, err error) error {
+	titleMsg := ToStr(title, ": ", msg)
+	if err != nil {
+		return NewWrappedError(titleMsg, err)
+	}
+	return errors.New(titleMsg)
+}

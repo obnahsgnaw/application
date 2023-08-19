@@ -8,7 +8,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
-	"errors"
+	"github.com/obnahsgnaw/application/pkg/utils"
 )
 
 /*
@@ -33,12 +33,16 @@ type RsaType int
 var (
 	SignHash                = crypto.SHA256
 	RsaEncoding             = base64.StdEncoding
-	ErrPublicKeyParseError  = errors.New("security error: public key parse failed. ")
-	ErrPublicKeyError       = errors.New("security error: public key error. ")
-	ErrPrivateKeyParseError = errors.New("security error: private key parse failed. ")
-	ErrNoEncData            = errors.New("security error: no encrypt data. ")
-	ErrNoDecData            = errors.New("security error: no decrypt data. ")
+	ErrPublicKeyParseError  = SecErr("public key parse failed")
+	ErrPublicKeyError       = SecErr("public key error")
+	ErrPrivateKeyParseError = SecErr("private key parse failed")
+	ErrNoEncData            = SecErr("no encrypt data")
+	ErrNoDecData            = SecErr("no decrypt data")
 )
+
+func SecErr(msg string) error {
+	return utils.TitledError("security error", msg, nil)
+}
 
 // Generate generate rsa private key and public key size: 密钥位数bit，加密的message不能比密钥长 (size/8 -11)
 func (rc *RsaCrypto) Generate(size int) (privateKey []byte, publicKey []byte, err error) {
