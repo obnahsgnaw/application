@@ -3,11 +3,15 @@ package logger
 import (
 	"errors"
 	"github.com/obnahsgnaw/application/pkg/logging"
+	"github.com/obnahsgnaw/application/pkg/logging/sinks"
+	"github.com/obnahsgnaw/application/pkg/logging/writer"
+	"github.com/obnahsgnaw/application/pkg/utils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 type Config struct {
@@ -45,7 +49,7 @@ func (c *Config) GetMaxAge() int {
 }
 func (c *Config) GetLevel() string {
 	if c.Level == "" {
-		return "Info"
+		return "info"
 	}
 
 	return c.Level
@@ -60,51 +64,65 @@ func (c *Config) GetTraceLevel() string {
 
 func NewAccessWriter(cnf *Config, debug bool) (w io.Writer) {
 	if cnf != nil && cnf.GetDir() != "" {
-		w = logging.NewFileWriter(filepath.Join(cnf.GetDir(), "access.log"), cnf.GetMaxSize(), cnf.GetMaxBackup(), cnf.GetMaxAge(), true)
+		w = writer.NewFileWriter(filepath.Join(cnf.GetDir(), "access.log"), cnf.GetMaxSize(), cnf.GetMaxBackup(), cnf.GetMaxAge(), true)
 	}
 	if w == nil && debug {
-		w = logging.NewStdWriter()
+		w = writer.NewStdWriter()
 	}
 	return
 }
 
 func NewErrorWriter(cnf *Config, debug bool) (w io.Writer) {
 	if cnf != nil && cnf.GetDir() != "" {
-		w = logging.NewFileWriter(filepath.Join(cnf.Dir, "error.log"), cnf.GetMaxSize(), cnf.GetMaxBackup(), cnf.GetMaxAge(), true)
+		w = writer.NewFileWriter(filepath.Join(cnf.Dir, "error.log"), cnf.GetMaxSize(), cnf.GetMaxBackup(), cnf.GetMaxAge(), true)
 	}
 	if w == nil && debug {
-		w = logging.NewStdWriter()
+		w = writer.NewStdWriter()
+	}
+	if w == nil {
+		w = writer.NewNullWriter()
 	}
 	return
 }
 
+func loggerError(msg string) error {
+	return errors.New("logger error: " + msg)
+}
+
 func NewFileLogger(name string, cnf *Config, develop bool) (l *zap.Logger, err error) {
+	if err = sinks.RegisterLumberjackSink(); err != nil {
+		return nil, err
+	}
 	if cnf == nil || cnf.GetDir() == "" {
-		err = errors.New("file log dir required")
+		err = loggerError("dir not set")
 		return
 	}
 
 	f, err1 := os.Stat(cnf.GetDir())
 	if err1 != nil {
-		err = errors.New("log dir err, err=" + err1.Error())
+		err = loggerError("dir invalid, err=" + err1.Error())
 		return
 	}
 	if !f.IsDir() {
-		err = errors.New("log dir is not a directory")
+		err = loggerError("dir is not a directory")
 		return
 	}
 
 	var level zapcore.Level
 	if level, err = zapcore.ParseLevel(cnf.GetLevel()); err != nil {
-		err = errors.New("logger level is invalid, err=" + err.Error())
+		err = loggerError("level is invalid, err=" + err.Error())
 		return
 	}
 	if name == "" {
 		name = "log"
 	}
-	l, err = logging.NewJsonLogger(name, level, []string{filepath.Join(cnf.GetDir(), name+".log")}, []string{filepath.Join(cnf.GetDir(), "error.log")}, develop)
+	url := utils.ToStr("lumberjack://", filepath.Join(cnf.GetDir(), name+".log"), "?max_size=", strconv.Itoa(cnf.GetMaxSize()),
+		"&max_age=", strconv.Itoa(cnf.GetMaxAge()), "&max_backup=", strconv.Itoa(cnf.GetMaxBackup()), "&compress=1")
+	urlErr := utils.ToStr("lumberjack://", filepath.Join(cnf.GetDir(), "error.log"), "?max_size=", strconv.Itoa(cnf.GetMaxSize()),
+		"&max_age=", strconv.Itoa(cnf.GetMaxAge()), "&max_backup=", strconv.Itoa(cnf.GetMaxBackup()), "&compress=1")
+	l, err = logging.NewJsonLogger(name, level, []string{url}, []string{urlErr}, develop)
 	if err != nil {
-		err = errors.New("logger init failed, err=" + err.Error())
+		err = loggerError("init failed, err=" + err.Error())
 		return
 	}
 	l = l.WithOptions(zap.AddStacktrace(zap.ErrorLevel))
@@ -114,7 +132,7 @@ func NewFileLogger(name string, cnf *Config, develop bool) (l *zap.Logger, err e
 func NewCliLogger(name, level string, develop bool) (l *zap.Logger, err error) {
 	var levelZ zapcore.Level
 	if levelZ, err = zapcore.ParseLevel(level); err != nil {
-		err = errors.New("logger level is invalid, err=" + err.Error())
+		err = loggerError("level is invalid, err=" + err.Error())
 		return
 	}
 	if name == "" {

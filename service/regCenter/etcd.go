@@ -2,7 +2,6 @@ package regCenter
 
 import (
 	"context"
-	"errors"
 	"github.com/obnahsgnaw/application/pkg/etcd/registercenter"
 	"time"
 )
@@ -30,7 +29,7 @@ func (e *EtcdRegister) Release() {
 
 func (e *EtcdRegister) Register(ctx context.Context, key, val string, ttl int64) error {
 	if e.register == nil {
-		return errors.New("register not init")
+		return nil
 	}
 	return e.register.RegisterSimpleServer(ctx, key, val, ttl)
 }
@@ -40,10 +39,9 @@ func (e *EtcdRegister) Unregister(ctx context.Context, key string) error {
 }
 
 func (e *EtcdRegister) Watch(ctx context.Context, keyPrefix string, handler func(key string, val string, isDel bool)) error {
-	if e.register == nil {
-		return errors.New("register not init")
+	if e.register != nil {
+		e.register.WatchSimpleServer(ctx, keyPrefix, handler)
 	}
-	e.register.WatchSimpleServer(ctx, keyPrefix, handler)
 	return nil
 }
 

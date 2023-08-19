@@ -24,7 +24,7 @@ type RsaCrypto struct {
 	disable bool
 }
 
-func NewRsa()*RsaCrypto  {
+func NewRsa() *RsaCrypto {
 	return &RsaCrypto{}
 }
 
@@ -33,11 +33,11 @@ type RsaType int
 var (
 	SignHash                = crypto.SHA256
 	RsaEncoding             = base64.StdEncoding
-	ErrPublicKeyParseError  = errors.New("Public key parse failed. ")
-	ErrPublicKeyError       = errors.New("Public key error. ")
-	ErrPrivateKeyParseError = errors.New("Private key parse failed. ")
-	ErrNoEncData            = errors.New("No encrypt data. ")
-	ErrNoDecData            = errors.New("No decrypt data. ")
+	ErrPublicKeyParseError  = errors.New("security error: public key parse failed. ")
+	ErrPublicKeyError       = errors.New("security error: public key error. ")
+	ErrPrivateKeyParseError = errors.New("security error: private key parse failed. ")
+	ErrNoEncData            = errors.New("security error: no encrypt data. ")
+	ErrNoDecData            = errors.New("security error: no decrypt data. ")
 )
 
 // Generate generate rsa private key and public key size: 密钥位数bit，加密的message不能比密钥长 (size/8 -11)

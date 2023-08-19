@@ -22,12 +22,16 @@ type RedisDistributedLocker struct {
 	client    *redis.Client
 }
 
+func lockerErr(msg string) error {
+	return errors.New("Redis locker error: " + msg)
+}
+
 func NewRedisDistributedLocker(client *redis.Client, key string, ttl time.Duration) (*RedisDistributedLocker, error) {
 	now := time.Now()
 	val := strconv.FormatInt(now.UnixNano(), 10)
 	key = dLockerKeyPrefix + ":" + key
 	if rs := client.SetNX(context.Background(), key, val, ttl); rs.Err() != nil {
-		return nil, rs.Err()
+		return nil, lockerErr(rs.Err().Error())
 	} else {
 		if rs.Val() {
 			return &RedisDistributedLocker{
@@ -39,7 +43,7 @@ func NewRedisDistributedLocker(client *redis.Client, key string, ttl time.Durati
 			}, nil
 		}
 
-		return nil, errors.New("locker exists")
+		return nil, lockerErr("locker exists")
 	}
 
 }
