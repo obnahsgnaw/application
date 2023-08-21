@@ -14,12 +14,12 @@ import (
 )
 
 type Config struct {
-	Dir        string `ini:"dir" long:"log-dir" description:"Log file dir path." required:"true" default:""`
-	MaxSize    int    `ini:"max-size" long:"log-maxSize" description:"Log file max size(M)." required:"true" default:"100"`
-	MaxBackup  int    `ini:"max-backup" long:"log-maxBackup" description:"Log file max backup." required:"true" default:"5"`
-	MaxAge     int    `ini:"max-age" long:"log-maxAge" description:"Log file max age (day)." required:"true" default:"5"`
-	Level      string `ini:"level" long:"log-level" description:"Log level: debug,info, warn,error, ..." required:"true" default:"Info"`
-	TraceLevel string `ini:"trace-level" long:"log-level" description:"Log level: debug,info, warn,error, ..." required:"true" default:"Error"`
+	Dir        string `json:"dir" yaml:"dir" ini:"dir" long:"log-dir" description:"Log file dir path." required:"true" default:""`
+	MaxSize    int    `json:"max_size" yaml:"max_size" ini:"max-size" long:"log-maxSize" description:"Log file max size(M)." required:"true" default:"100"`
+	MaxBackup  int    `json:"max_backup" yaml:"max_backup" ini:"max-backup" long:"log-maxBackup" description:"Log file max backup." required:"true" default:"5"`
+	MaxAge     int    `json:"max_age" yaml:"max_age" ini:"max-age" long:"log-maxAge" description:"Log file max age (day)." required:"true" default:"5"`
+	Level      string `json:"level" yaml:"level" ini:"level" long:"log-level" description:"Log level: debug,info, warn,error, ..." required:"true" default:"Info"`
+	TraceLevel string `json:"trace_level" yaml:"trace_level" ini:"trace-level" long:"log-trace-level" description:"Log trace level: debug,info, warn,error, ..." required:"true" default:"Error"`
 }
 
 func (c *Config) GetDir() string {
@@ -55,7 +55,7 @@ func (c *Config) GetLevel() string {
 }
 func (c *Config) GetTraceLevel() string {
 	if c.TraceLevel == "" {
-		return "Error"
+		return "error"
 	}
 
 	return c.TraceLevel
