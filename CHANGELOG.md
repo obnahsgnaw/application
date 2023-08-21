@@ -1,4 +1,12 @@
 
+<a name="v0.10.0"></a>
+## [v0.10.0](https://8.140.161.172/wangsb/wgateway/compare/v0.9.0...v0.10.0) (2023-08-21)
+
+### Performance Improvements
+
+* **pkg.logger:** perf log config
+
+
 <a name="v0.9.0"></a>
 ## [v0.9.0](https://8.140.161.172/wangsb/wgateway/compare/v0.8.0...v0.9.0) (2023-08-19)
 
