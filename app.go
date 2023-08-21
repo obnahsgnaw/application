@@ -39,7 +39,7 @@ type Application struct {
 	logCnf   *logger.Config
 	errs     []error
 	debugger debug.Debugger
-	servers  map[servertype.ServerType]map[string]Server
+	servers  map[servertype.ServerType]map[endtype.EndType]map[string]Server
 	event    *event.Manger
 	register regCenter.Register
 	children []*Application
@@ -59,7 +59,7 @@ func New(id, name string, options ...Option) *Application {
 			return false
 		})),
 		event:   event.New(),
-		servers: make(map[servertype.ServerType]map[string]Server),
+		servers: make(map[servertype.ServerType]map[endtype.EndType]map[string]Server),
 		regTtl:  5,
 	}
 	s.With(options...)
@@ -126,33 +126,39 @@ func (app *Application) AddServer(server Server) {
 		return
 	}
 	if _, ok := app.servers[server.Type()]; !ok {
-		app.servers[server.Type()] = make(map[string]Server)
+		app.servers[server.Type()] = make(map[endtype.EndType]map[string]Server)
 	}
-	app.servers[server.Type()][server.ID()] = server
-	app.debug(utils.ToStr("added server:", server.Name()))
+	if _, ok := app.servers[server.Type()][server.EndType()]; !ok {
+		app.servers[server.Type()][server.EndType()] = make(map[string]Server)
+	}
+	app.servers[server.Type()][server.EndType()][server.ID()] = server
+	app.debug(utils.ToStr("added ", server.Type().String(), " ", server.EndType().String(), " server:", server.Name()))
 }
 
 // GetTypeServers return servers
-func (app *Application) GetTypeServers(typ servertype.ServerType) map[string]Server {
+func (app *Application) GetTypeServers(typ servertype.ServerType) map[endtype.EndType]map[string]Server {
 	if typ == "" {
-		return make(map[string]Server)
+		return make(map[endtype.EndType]map[string]Server)
 	}
 	if ss, ok := app.servers[typ]; ok {
 		return ss
 	}
 
-	return make(map[string]Server)
+	return make(map[endtype.EndType]map[string]Server)
 }
 
 // GetTypeServer return server
-func (app *Application) GetTypeServer(typ servertype.ServerType, id string) (Server, bool) {
+func (app *Application) GetTypeServer(typ servertype.ServerType, et endtype.EndType, id string) (Server, bool) {
 	if id == "" {
 		return nil, false
 	}
 	if ss, ok := app.servers[typ]; ok {
-		if s, ok := ss[id]; ok {
-			return s, true
+		if s, ok := ss[et]; ok {
+			if s1, ok := s[id]; ok {
+				return s1, true
+			}
 		}
+
 	}
 
 	return nil, false
@@ -172,9 +178,11 @@ func (app *Application) Run(failedCb func(err error)) {
 	app.initEvent(failedCb)
 
 	for _, typeServers := range app.servers {
-		for _, s := range typeServers {
-			app.debug("start run server:" + s.Name())
-			s.Run(failedCb)
+		for _, etServers := range typeServers {
+			for _, s := range etServers {
+				app.debug(utils.ToStr("start run ", s.Type().String(), " ", s.EndType().String(), " server:", s.Name()))
+				s.Run(failedCb)
+			}
 		}
 	}
 
@@ -214,9 +222,11 @@ func (app *Application) Run(failedCb func(err error)) {
 func (app *Application) Release() {
 	app.debug("start release application")
 	for _, typeServers := range app.servers {
-		for _, s := range typeServers {
-			app.debug("release server:" + s.Name())
-			s.Release()
+		for _, etServers := range typeServers {
+			for _, s := range etServers {
+				app.debug(utils.ToStr("release ", s.Type().String(), " ", s.EndType().String(), " server:", s.Name()))
+				s.Release()
+			}
 		}
 	}
 	app.debug("release application logger")
