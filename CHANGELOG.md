@@ -1,4 +1,12 @@
 
+<a name="v0.11.0"></a>
+## [v0.11.0](https://8.140.161.172/wangsb/wgateway/compare/v0.10.1...v0.11.0) (2023-08-21)
+
+### Performance Improvements
+
+* **app:** perf server store with endtype
+
+
 <a name="v0.10.1"></a>
 ## [v0.10.1](https://8.140.161.172/wangsb/wgateway/compare/v0.10.0...v0.10.1) (2023-08-21)
 
