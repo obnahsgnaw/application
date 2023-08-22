@@ -10,6 +10,7 @@ type Register interface {
 	Register(ctx context.Context, key, val string, ttl int64) error
 	Unregister(ctx context.Context, key string) error
 	Watch(ctx context.Context, keyPrefix string, handler func(key string, val string, isDel bool)) error
+	LastPrefixedIndex(ctx context.Context, keyPrefix string, indexParser func(key string) int) (int, error)
 }
 
 type ServerInfo struct {
