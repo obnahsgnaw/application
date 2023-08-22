@@ -1,4 +1,12 @@
 
+<a name="v0.13.0"></a>
+## [v0.13.0](https://8.140.161.172/wangsb/wgateway/compare/v0.12.0...v0.13.0) (2023-08-22)
+
+### Features
+
+* **app.go:** added custom release callback register
+
+
 <a name="v0.12.0"></a>
 ## [v0.12.0](https://8.140.161.172/wangsb/wgateway/compare/v0.11.0...v0.12.0) (2023-08-22)
 
