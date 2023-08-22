@@ -44,6 +44,7 @@ type Application struct {
 	register regCenter.Register
 	children []*Application
 	regTtl   int64
+	releases []func()
 }
 
 // New return a new application
@@ -242,6 +243,18 @@ func (app *Application) Release() {
 			app.debug("release sub application:" + sub.name)
 			sub.Release()
 		}
+	}
+	if len(app.releases) > 0 {
+		app.debug("release custom release callback")
+		for _, r := range app.releases {
+			r()
+		}
+	}
+}
+
+func (app *Application) AddRelease(r func()) {
+	if r != nil {
+		app.releases = append(app.releases, r)
 	}
 }
 
