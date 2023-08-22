@@ -2,6 +2,7 @@ package regCenter
 
 import (
 	"context"
+	"github.com/obnahsgnaw/application/pkg/etcd"
 	"github.com/obnahsgnaw/application/pkg/etcd/registercenter"
 	"time"
 )
@@ -43,6 +44,10 @@ func (e *EtcdRegister) Watch(ctx context.Context, keyPrefix string, handler func
 		e.register.WatchSimpleServer(ctx, keyPrefix, handler)
 	}
 	return nil
+}
+
+func (e *EtcdRegister) LastPrefixedIndex(ctx context.Context, keyPrefix string, indexParser func(key string) int) (int, error) {
+	return etcd.GetLastIndex(ctx, e.Etcd().Conn(), keyPrefix, 5*time.Second, indexParser)
 }
 
 func (e *EtcdRegister) Etcd() *registercenter.EtcdRegister {
