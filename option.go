@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"github.com/obnahsgnaw/application/pkg/debug"
+	"github.com/obnahsgnaw/application/pkg/dynamic"
 	"github.com/obnahsgnaw/application/pkg/logging/logger"
 	"github.com/obnahsgnaw/application/pkg/utils"
 	"github.com/obnahsgnaw/application/service/regCenter"
@@ -21,6 +22,13 @@ func Debugger(debugger debug.Debugger) Option {
 	return func(s *Application) {
 		if debugger != nil {
 			s.debugger = debugger
+		}
+	}
+}
+func Debug(cb func() bool) Option {
+	return func(s *Application) {
+		if cb != nil {
+			s.debugger = debug.New(dynamic.NewBool(cb))
 		}
 	}
 }
@@ -48,7 +56,6 @@ func Register(register regCenter.Register) Option {
 	return func(s *Application) {
 		if register != nil {
 			s.register = register
-			s.debug("set register")
 		}
 	}
 }
@@ -59,15 +66,14 @@ func EtcdRegister(endpoints []string, opeTimeout time.Duration) Option {
 			opeTimeout = 5 * time.Second
 		}
 		if len(endpoints) == 0 {
-			s.addErr(applicationError("etcd endpoint required", nil))
+			s.addErr(applicationError("with EtcdRegister failed, etcd endpoint required", nil))
 			return
 		}
 		etcdReg, err := regCenter.NewEtcdRegister(endpoints, opeTimeout)
 		if err != nil {
-			s.addErr(applicationError("new etcd register failed", err))
+			s.addErr(applicationError("with EtcdRegister new etcd register failed", err))
 			return
 		}
-		s.debug("try set etcd register")
 		s.With(Register(etcdReg))
 	}
 }
