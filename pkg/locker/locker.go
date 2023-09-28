@@ -23,7 +23,7 @@ type RedisDistributedLocker struct {
 }
 
 func lockerErr(msg string) error {
-	return utils.TitledError("redis locker error", msg, nil)
+	return utils.TitledError("RedisDistributedLocker error", msg, nil)
 }
 
 func NewRedisDistributedLocker(client *redis.Client, key string, ttl time.Duration) (*RedisDistributedLocker, error) {
