@@ -144,7 +144,7 @@ func (app *Application) AddServer(server Server) {
 		app.servers[server.Type()][server.EndType()] = make(map[string]Server)
 	}
 	app.servers[server.Type()][server.EndType()][server.ID()] = server
-	app.debug(utils.ToStr("added ", server.EndType().String(), " ", server.Type().String(), " server:", server.Name()))
+	app.debug(utils.ToStr(server.EndType().String(), " ", server.Type().String(), " server[", server.Name(), "] added"))
 }
 
 // GetTypeServers return servers
@@ -182,7 +182,7 @@ func (app *Application) Run(failedCb func(err error)) {
 		failedCb(app.errs[0])
 		return
 	}
-	app.debug("starting...")
+	app.logger.Info("start running...")
 	app.displayConfig()
 
 	app.initEvent(failedCb)
@@ -190,12 +190,12 @@ func (app *Application) Run(failedCb func(err error)) {
 	for _, typeServers := range app.servers {
 		for _, etServers := range typeServers {
 			for _, s := range etServers {
-				app.debug(utils.ToStr(s.EndType().String(), " ", s.Type().String(), " server[", s.Name(), "] start running "))
+				app.debug(utils.ToStr(s.EndType().String(), " ", s.Type().String(), " server[", s.Name(), "] init start"))
 				s.Run(failedCb)
 			}
 		}
 	}
-	app.debug("servers init complete")
+	app.debug("servers initialized")
 
 	if len(app.children) > 0 {
 		for _, sub := range app.children {
@@ -205,26 +205,28 @@ func (app *Application) Run(failedCb func(err error)) {
 			sub.logCnf = app.logCnf
 			sub.register = app.register
 			sub.regTtl = app.regTtl
-			app.debug(utils.ToStr("sub application[", sub.name, "] start init"))
+			app.debug(utils.ToStr("sub application[", sub.name, "] init start "))
 			sub.Run(failedCb)
 		}
 	}
-	app.debug("sub applications init complete")
+	app.debug("sub applications initialized")
 }
 
 func (app *Application) displayConfig() {
-	app.debug("cluster: " + app.cluster.String())
+	debugDesc := "debug=false"
 	if app.debugger.Debug() {
-		app.debug("debug: true")
-	} else {
-		app.debug("debug: false")
+		debugDesc = "debug=true"
 	}
+	regDesc := "register-set=false"
 	if app.register != nil {
-		app.debug("register: yes")
-	} else {
-		app.debug("register: no")
+		regDesc = "register-set=true"
 	}
-	app.debug("register ttl: " + strconv.FormatInt(app.regTtl, 10))
+	app.debug(utils.ToStr(
+		"config: cluster=", app.cluster.String(),
+		",", debugDesc,
+		",", regDesc,
+		",register-ttl=", strconv.FormatInt(app.regTtl, 10),
+	))
 }
 
 func (app *Application) Wait() {
@@ -320,7 +322,7 @@ func (app *Application) initEvent(failedCb func(err error)) {
 	if err := event.Init(app.event); err != nil {
 		failedCb(err)
 	}
-	app.debug("event manager init complete")
+	app.debug("event manager initialized")
 }
 
 func (app *Application) debug(msg string) {
