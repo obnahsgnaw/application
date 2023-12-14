@@ -12,6 +12,7 @@ import (
 	"github.com/obnahsgnaw/application/service/event"
 	"github.com/obnahsgnaw/application/service/regCenter"
 	"go.uber.org/zap"
+	"path/filepath"
 	"strconv"
 )
 
@@ -70,7 +71,14 @@ func New(cluster *Cluster, name string, options ...Option) *Application {
 	}
 	s.With(options...)
 	if s.logger == nil {
-		s.logger, err = logger.New(utils.ToStr("App[", name, "]"), s.logCnf, s.debugger.Debug())
+		if s.logCnf != nil {
+			clusterId := ""
+			if s.cluster != nil {
+				clusterId = s.cluster.id
+			}
+			s.logCnf.AddSubDir(filepath.Join(clusterId, "application", s.name))
+		}
+		s.logger, err = logger.New("", s.logCnf, s.debugger.Debug())
 	}
 	s.addErr(err)
 	return s
@@ -144,7 +152,7 @@ func (app *Application) AddServer(server Server) {
 		app.servers[server.Type()][server.EndType()] = make(map[string]Server)
 	}
 	app.servers[server.Type()][server.EndType()][server.ID()] = server
-	app.debug(utils.ToStr(server.EndType().String(), " ", server.Type().String(), " server[", server.Name(), "] added"))
+	app.logger.Debug(app.prefixedMsg(server.EndType().String(), " ", server.Type().String(), " server[", server.Name(), "] added"))
 }
 
 // GetTypeServers return servers
@@ -182,7 +190,7 @@ func (app *Application) Run(failedCb func(err error)) {
 		failedCb(app.errs[0])
 		return
 	}
-	app.logger.Info("start running...")
+	app.logger.Info(app.prefixedMsg("starting..."))
 	app.displayConfig()
 
 	app.initEvent(failedCb)
@@ -190,12 +198,12 @@ func (app *Application) Run(failedCb func(err error)) {
 	for _, typeServers := range app.servers {
 		for _, etServers := range typeServers {
 			for _, s := range etServers {
-				app.debug(utils.ToStr(s.EndType().String(), " ", s.Type().String(), " server[", s.Name(), "] init start"))
+				app.logger.Debug(app.prefixedMsg(s.EndType().String(), " ", s.Type().String(), " server[", s.Name(), "] init start"))
 				s.Run(failedCb)
 			}
 		}
 	}
-	app.debug("servers initialized")
+	app.logger.Debug(app.prefixedMsg("servers initialized"))
 
 	if len(app.children) > 0 {
 		for _, sub := range app.children {
@@ -205,11 +213,11 @@ func (app *Application) Run(failedCb func(err error)) {
 			sub.logCnf = app.logCnf
 			sub.register = app.register
 			sub.regTtl = app.regTtl
-			app.debug(utils.ToStr("sub application[", sub.name, "] init start "))
+			app.logger.Debug(app.prefixedMsg("sub application[", sub.name, "] init start"))
 			sub.Run(failedCb)
 		}
 	}
-	app.debug("sub applications initialized")
+	app.logger.Debug(app.prefixedMsg("sub applications initialized"))
 }
 
 func (app *Application) displayConfig() {
@@ -221,20 +229,20 @@ func (app *Application) displayConfig() {
 	if app.register != nil {
 		regDesc = "register-set=true"
 	}
-	app.debug(utils.ToStr(
+	app.logger.Debug(app.prefixedMsg(utils.ToStr(
 		"config: cluster=", app.cluster.String(),
 		",", debugDesc,
 		",", regDesc,
 		",register-ttl=", strconv.FormatInt(app.regTtl, 10),
-	))
+	)))
 }
 
 func (app *Application) Wait() {
 	signals.Listen(nil)
-	app.logger.Info("start and serving...")
+	app.logger.Info(app.prefixedMsg("started and serving..."))
 	signals.Wait()
 	app.cancel()
-	app.logger.Info("down")
+	app.logger.Info(app.prefixedMsg("down"))
 }
 
 // Release stop and release application
@@ -266,7 +274,7 @@ func (app *Application) Release() {
 			r()
 		}
 	}
-	app.debug("application released")
+	app.logger.Debug(app.prefixedMsg("released"))
 }
 
 func (app *Application) AddRelease(r func()) {
@@ -281,7 +289,7 @@ func (app *Application) AddChild(apps ...*Application) {
 		for _, a := range apps {
 			if a != nil && a.cluster != nil && a.cluster.id == app.cluster.id && a.name != app.name {
 				app.children = append(app.children, a)
-				app.debug("added sub application:" + a.Name())
+				app.logger.Debug(app.prefixedMsg("sub application[", a.Name(), "] added"))
 			}
 		}
 	}
@@ -291,14 +299,14 @@ func (app *Application) AddChild(apps ...*Application) {
 // DoRegister register
 func (app *Application) DoRegister(regInfo *regCenter.RegInfo) error {
 	if app.register == nil {
-		app.logger.Warn("do register failed, no register to do")
+		app.logger.Warn(app.prefixedMsg("do register failed, no register to do"))
 		return nil
 	}
 	for k, v := range regInfo.Kvs() {
 		if err := app.register.Register(app.ctx, k, v, regInfo.Ttl); err != nil {
 			return applicationError("do register failed", err)
 		}
-		app.debug(utils.ToStr("registered:", k, "=>", v))
+		app.logger.Debug(app.prefixedMsg("registered:", k, "=>", v))
 	}
 	return nil
 }
@@ -306,14 +314,14 @@ func (app *Application) DoRegister(regInfo *regCenter.RegInfo) error {
 // DoUnregister unregister
 func (app *Application) DoUnregister(regInfo *regCenter.RegInfo) error {
 	if app.register == nil {
-		app.logger.Warn("do unregister failed, no register to do")
+		app.logger.Warn(app.prefixedMsg("do unregister failed, no register to do"))
 		return nil
 	}
 	for k := range regInfo.Kvs() {
 		if err := app.register.Unregister(app.ctx, k); err != nil {
 			return applicationError("do unregister failed", err)
 		}
-		app.debug(utils.ToStr("unregistered:", k))
+		app.logger.Debug(app.prefixedMsg("unregistered:", k))
 	}
 	return nil
 }
@@ -322,13 +330,7 @@ func (app *Application) initEvent(failedCb func(err error)) {
 	if err := event.Init(app.event); err != nil {
 		failedCb(err)
 	}
-	app.debug("event manager initialized")
-}
-
-func (app *Application) debug(msg string) {
-	if app.debugger.Debug() {
-		app.logger.Debug(msg)
-	}
+	app.logger.Debug(app.prefixedMsg("event manager initialized"))
 }
 
 func (app *Application) addErr(err error) {
@@ -339,4 +341,7 @@ func (app *Application) addErr(err error) {
 
 func (app *Application) Errs() []error {
 	return app.errs
+}
+func (app *Application) prefixedMsg(msg ...string) string {
+	return utils.ToStr(msg...)
 }

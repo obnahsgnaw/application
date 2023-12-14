@@ -5,8 +5,8 @@ import (
 	"github.com/obnahsgnaw/application/pkg/debug"
 	"github.com/obnahsgnaw/application/pkg/dynamic"
 	"github.com/obnahsgnaw/application/pkg/logging/logger"
-	"github.com/obnahsgnaw/application/pkg/utils"
 	"github.com/obnahsgnaw/application/service/regCenter"
+	"path/filepath"
 	"time"
 )
 
@@ -35,10 +35,17 @@ func Debug(cb func() bool) Option {
 
 func Logger(config *logger.Config) Option {
 	return func(s *Application) {
+		var err error
 		if config != nil {
 			s.logCnf = config
-			var err error
-			s.logger, err = logger.New(utils.ToStr("App[", s.name, "]"), s.logCnf, s.debugger.Debug())
+			if s.logCnf != nil {
+				clusterId := ""
+				if s.cluster != nil {
+					clusterId = s.cluster.id
+				}
+				s.logCnf.AddSubDir(filepath.Join(clusterId, "application", s.name))
+			}
+			s.logger, err = logger.New("", s.logCnf, s.debugger.Debug())
 			s.addErr(err)
 		}
 	}
