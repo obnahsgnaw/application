@@ -255,8 +255,6 @@ func (app *Application) Release() {
 		}
 	}
 
-	_ = app.logger.Sync()
-
 	if app.register != nil {
 		if etcd, ok := app.register.(*regCenter.EtcdRegister); ok {
 			etcd.Release()
@@ -274,7 +272,10 @@ func (app *Application) Release() {
 			r()
 		}
 	}
-	app.logger.Debug(app.prefixedMsg("released"))
+	if app.logger != nil {
+		app.logger.Debug(app.prefixedMsg("released"))
+		_ = app.logger.Sync()
+	}
 }
 
 func (app *Application) AddRelease(r func()) {
@@ -342,6 +343,7 @@ func (app *Application) addErr(err error) {
 func (app *Application) Errs() []error {
 	return app.errs
 }
+
 func (app *Application) prefixedMsg(msg ...string) string {
 	return utils.ToStr(msg...)
 }
