@@ -152,7 +152,6 @@ func (app *Application) AddServer(server Server) {
 		app.servers[server.Type()][server.EndType()] = make(map[string]Server)
 	}
 	app.servers[server.Type()][server.EndType()][server.ID()] = server
-	app.logger.Debug(app.prefixedMsg(server.EndType().String(), " ", server.Type().String(), " server[", server.Name(), "] added"))
 }
 
 // GetTypeServers return servers
@@ -190,21 +189,19 @@ func (app *Application) Run(failedCb func(err error)) {
 		failedCb(app.errs[0])
 		return
 	}
-	app.logger.Info(app.prefixedMsg("starting..."))
+	app.logger.Info(app.prefixedMsg("application init starting..."))
 	app.displayConfig()
-
 	app.initEvent(failedCb)
-
 	for _, typeServers := range app.servers {
 		for _, etServers := range typeServers {
 			for _, s := range etServers {
-				app.logger.Debug(app.prefixedMsg(s.EndType().String(), " ", s.Type().String(), " server[", s.Name(), "] init start"))
+				app.logger.Debug(app.prefixedMsg(s.EndType().String(), " ", s.Type().String(), " server[", s.Name(), "] init starting..."))
 				s.Run(failedCb)
+				app.logger.Debug(app.prefixedMsg(s.EndType().String(), " ", s.Type().String(), " server[", s.Name(), "] initialized"))
 			}
 		}
 	}
-	app.logger.Debug(app.prefixedMsg("servers initialized"))
-
+	app.logger.Info(app.prefixedMsg("services initialized"))
 	if len(app.children) > 0 {
 		for _, sub := range app.children {
 			sub.With(Context(app.ctx))
@@ -213,11 +210,13 @@ func (app *Application) Run(failedCb func(err error)) {
 			sub.logCnf = app.logCnf
 			sub.register = app.register
 			sub.regTtl = app.regTtl
-			app.logger.Debug(app.prefixedMsg("sub application[", sub.name, "] init start"))
+			app.logger.Debug(app.prefixedMsg("sub-application[", sub.name, "] init starting..."))
 			sub.Run(failedCb)
+			app.logger.Debug(app.prefixedMsg("sub-application[", sub.name, "] initialized"))
 		}
 	}
-	app.logger.Debug(app.prefixedMsg("sub applications initialized"))
+	app.logger.Info(app.prefixedMsg("sub-applications initialized"))
+	app.logger.Info(app.prefixedMsg("application initialized"))
 }
 
 func (app *Application) displayConfig() {
@@ -273,7 +272,7 @@ func (app *Application) Release() {
 		}
 	}
 	if app.logger != nil {
-		app.logger.Debug(app.prefixedMsg("released"))
+		app.logger.Info(app.prefixedMsg("released"))
 		_ = app.logger.Sync()
 	}
 }
@@ -290,15 +289,16 @@ func (app *Application) AddChild(apps ...*Application) {
 		for _, a := range apps {
 			if a != nil && a.cluster != nil && a.cluster.id == app.cluster.id && a.name != app.name {
 				app.children = append(app.children, a)
-				app.logger.Debug(app.prefixedMsg("sub application[", a.Name(), "] added"))
 			}
 		}
 	}
-
 }
 
 // DoRegister register
 func (app *Application) DoRegister(regInfo *regCenter.RegInfo) error {
+	if !app.valid() {
+		return nil
+	}
 	if app.register == nil {
 		app.logger.Warn(app.prefixedMsg("do register failed, no register to do"))
 		return nil
@@ -314,6 +314,9 @@ func (app *Application) DoRegister(regInfo *regCenter.RegInfo) error {
 
 // DoUnregister unregister
 func (app *Application) DoUnregister(regInfo *regCenter.RegInfo) error {
+	if !app.valid() {
+		return nil
+	}
 	if app.register == nil {
 		app.logger.Warn(app.prefixedMsg("do unregister failed, no register to do"))
 		return nil
@@ -346,4 +349,8 @@ func (app *Application) Errs() []error {
 
 func (app *Application) prefixedMsg(msg ...string) string {
 	return utils.ToStr(msg...)
+}
+
+func (app *Application) valid() bool {
+	return len(app.errs) == 0
 }
