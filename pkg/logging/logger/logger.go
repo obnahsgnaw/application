@@ -126,10 +126,31 @@ func (c *Config) GetTraceLevelString() string {
 
 	return c.TraceLevel
 }
-func (c *Config) AddSubDir(dirname string) {
-	if dirname != "" && !strings.HasSuffix(c.subDir, dirname) {
-		c.subDir = filepath.Join(c.subDir, dirname)
+func (c *Config) AddSubDir(dirname ...string) {
+	for _, n := range dirname {
+		if n != "" && !strings.HasSuffix(c.subDir, n) {
+			c.subDir = filepath.Join(c.subDir, n)
+		}
 	}
+}
+
+func CopyCnfWithLevel(cnf *Config) *Config {
+	c := CopyCnf(cnf)
+	if c != nil {
+		c.level = cnf.level
+		c.traceLevel = cnf.traceLevel
+	}
+
+	return c
+}
+
+func CopyCnf(cnf *Config) *Config {
+	if cnf == nil {
+		return nil
+	}
+	c := *cnf
+
+	return &c
 }
 
 func NewAccessWriter(cnf *Config, debug bool) (w io.Writer, err error) {
