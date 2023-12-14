@@ -23,9 +23,9 @@ func NewEncoderConfig() zapcore.EncoderConfig {
 }
 
 // NewLoggerConfig logger config
-func NewLoggerConfig(level zapcore.Level, output []string, errPath []string, develop bool, encoding EncodingType, encoderConf zapcore.EncoderConfig) zap.Config {
+func NewLoggerConfig(level zap.AtomicLevel, output []string, errPath []string, develop bool, encoding EncodingType, encoderConf zapcore.EncoderConfig) zap.Config {
 	conf := zap.Config{
-		Level:       zap.NewAtomicLevelAt(level),
+		Level:       level,
 		Development: develop,
 		Sampling: &zap.SamplingConfig{
 			Initial:    100,
@@ -47,31 +47,29 @@ func NewLoggerConfig(level zapcore.Level, output []string, errPath []string, dev
 }
 
 // New a new logger
-func New(name string, conf zap.Config, opts ...zap.Option) (*zap.Logger, error) {
-	logger, err := conf.Build(opts...)
-	if err != nil {
+func New(name string, conf zap.Config, opts ...zap.Option) (logger *zap.Logger, err error) {
+	if logger, err = conf.Build(opts...); err != nil {
 		return nil, err
 	}
-
 	if name != "" {
 		logger = logger.Named(name)
 	}
 
-	return logger, nil
+	return
 }
 
 // NewJsonLogger json encoder logger
-func NewJsonLogger(name string, level zapcore.Level, output []string, errPath []string, develop bool) (*zap.Logger, error) {
+func NewJsonLogger(name string, level zap.AtomicLevel, output []string, errPath []string, develop bool) (*zap.Logger, error) {
 	return New(name, NewLoggerConfig(level, output, errPath, develop, EncodingJson, NewEncoderConfig()))
 }
 
 // NewConsoleLogger console encoder logger
-func NewConsoleLogger(name string, level zapcore.Level, output []string, errPath []string, develop bool) (*zap.Logger, error) {
+func NewConsoleLogger(name string, level zap.AtomicLevel, output []string, errPath []string, develop bool) (*zap.Logger, error) {
 	return New(name, NewLoggerConfig(level, output, errPath, develop, EncodingConsole, NewEncoderConfig()))
 }
 
 // NewCliLogger cli console logger
-func NewCliLogger(name string, level zapcore.Level, develop bool) (*zap.Logger, error) {
+func NewCliLogger(name string, level zap.AtomicLevel, develop bool) (*zap.Logger, error) {
 	encoderConf := NewEncoderConfig()
 	encoderConf.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	return New(name, NewLoggerConfig(level, nil, nil, develop, EncodingConsole, encoderConf))
