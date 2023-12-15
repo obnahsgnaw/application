@@ -78,7 +78,7 @@ func New(cluster *Cluster, name string, options ...Option) *Application {
 			}
 			s.logCnf.AddSubDir(filepath.Join(clusterId, s.name+"-application"))
 		}
-		s.logger, err = logger.New("application", s.logCnf, s.debugger.Debug())
+		s.logger, err = logger.New("application:"+s.name, s.logCnf, s.debugger.Debug())
 	}
 	s.addErr(err)
 	return s
@@ -189,7 +189,7 @@ func (app *Application) Run(failedCb func(err error)) {
 		failedCb(app.errs[0])
 		return
 	}
-	app.logger.Info(app.prefixedMsg("application[", app.name, "] init starting..."))
+	app.logger.Info(app.prefixedMsg("init starting..."))
 	app.displayConfig()
 	if !app.initEvent(failedCb) {
 		return
@@ -228,7 +228,7 @@ func (app *Application) Run(failedCb func(err error)) {
 	if app.register == nil {
 		app.logger.Warn(app.prefixedMsg("no server-register registered"))
 	}
-	app.logger.Info(app.prefixedMsg("application[", app.name, "] initialized"))
+	app.logger.Info(app.prefixedMsg("initialized"))
 }
 
 func (app *Application) displayConfig() {
