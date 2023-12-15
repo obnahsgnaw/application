@@ -27,6 +27,7 @@ type Config struct {
 	levelInitialized      bool
 	traceLevelInitialized bool
 	subDir                string
+	minTraceLevel         zapcore.Level
 }
 
 func (c *Config) GetDir() string {
@@ -89,7 +90,8 @@ func (c *Config) InitLevel() error {
 }
 func (c *Config) InitTraceLevel() error {
 	if !c.traceLevelInitialized {
-		c.traceLevel = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+		c.minTraceLevel = zapcore.WarnLevel
+		c.traceLevel = zap.NewAtomicLevelAt(zapcore.WarnLevel)
 		if err := c.SetTraceLevel(c.GetTraceLevelString()); err != nil {
 			return err
 		}
@@ -112,9 +114,14 @@ func (c *Config) SetTraceLevel(level string) error {
 	if l, err := zapcore.ParseLevel(level); err != nil {
 		return err
 	} else {
-		c.traceLevel.SetLevel(l)
+		if l >= c.minTraceLevel {
+			c.traceLevel.SetLevel(l)
+		}
 	}
 	return nil
+}
+func (c *Config) SetMinTraceLevel(level zapcore.Level) {
+	c.minTraceLevel = level
 }
 func (c *Config) GetTraceLevel() zap.AtomicLevel {
 	return c.traceLevel
