@@ -257,8 +257,8 @@ func NewFileLogger(name string, cnf *Config, develop bool) (l *zap.Logger, err e
 	return
 }
 
-func NewCliLogger(_ string, level zap.AtomicLevel, develop bool) (l *zap.Logger, err error) {
-	if l, err = logging.NewCliLogger("", level, develop); err == nil {
+func NewCliLogger(name string, level zap.AtomicLevel, develop bool) (l *zap.Logger, err error) {
+	if l, err = logging.NewCliLogger(name, level, develop); err == nil {
 		l = l.WithOptions(zap.AddStacktrace(zap.FatalLevel))
 	}
 	return

@@ -45,7 +45,7 @@ func Logger(config *logger.Config) Option {
 				}
 				s.logCnf.AddSubDir(filepath.Join(clusterId, s.name+"-application"))
 			}
-			s.logger, err = logger.New("application", s.logCnf, s.debugger.Debug())
+			s.logger, err = logger.New("application:"+s.name, s.logCnf, s.debugger.Debug())
 			s.addErr(err)
 		}
 	}
