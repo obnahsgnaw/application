@@ -118,6 +118,9 @@ func (c *Config) SetTraceLevel(level string) error {
 	}
 	return nil
 }
+func (c *Config) ReplaceTraceLevel(l zap.AtomicLevel) {
+	c.traceLevel = l
+}
 func (c *Config) GetTraceLevel() zap.AtomicLevel {
 	return c.traceLevel
 }
