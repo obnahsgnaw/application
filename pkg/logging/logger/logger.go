@@ -29,6 +29,7 @@ type Config struct {
 	traceLevelInitialized bool
 	subDir                string
 	minTraceLevel         zapcore.Level
+	fileName              string
 }
 
 func (c *Config) GetDir() string {
@@ -155,6 +156,16 @@ func (c *Config) SetFormat(f string) {
 		c.Format = "console"
 	}
 }
+func (c *Config) GetFilename() string {
+	if c.fileName == "" {
+		return "log"
+	} else {
+		return c.fileName
+	}
+}
+func (c *Config) SetFilename(f string) {
+	c.fileName = f
+}
 
 func CopyCnfWithLevel(cnf *Config) *Config {
 	c := CopyCnf(cnf)
@@ -232,13 +243,9 @@ func NewFileLogger(name string, cnf *Config, develop bool) (l *zap.Logger, err e
 		err = loggerError("trace level is invalid, err=" + err.Error())
 		return
 	}
-	filename := name
-	if filename == "" {
-		filename = "log"
-	}
-	url := utils.ToStr("lumberjack://", filepath.Join(dir, filename+".log"), "?max_size=", strconv.Itoa(cnf.GetMaxSize()),
+	url := utils.ToStr("lumberjack://", filepath.Join(dir, cnf.GetFilename()+".log"), "?max_size=", strconv.Itoa(cnf.GetMaxSize()),
 		"&max_age=", strconv.Itoa(cnf.GetMaxAge()), "&max_backup=", strconv.Itoa(cnf.GetMaxBackup()), "&compress=1")
-	urlErr := utils.ToStr("lumberjack://", filepath.Join(dir, "error.log"), "?max_size=", strconv.Itoa(cnf.GetMaxSize()),
+	urlErr := utils.ToStr("lumberjack://", filepath.Join(dir, cnf.GetFilename()+"-error.log"), "?max_size=", strconv.Itoa(cnf.GetMaxSize()),
 		"&max_age=", strconv.Itoa(cnf.GetMaxAge()), "&max_backup=", strconv.Itoa(cnf.GetMaxBackup()), "&compress=1")
 
 	if cnf.GetFormat() == "json" {
