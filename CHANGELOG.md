@@ -1,4 +1,20 @@
 
+<a name="v0.15.7"></a>
+## [v0.15.7](https://8.140.161.172/wangsb/wgateway/compare/v0.15.6...v0.15.7) (2023-12-15)
+
+### Bug Fixes
+
+* **traefik:** fix router middleware index
+
+
+<a name="v0.15.6"></a>
+## [v0.15.6](https://8.140.161.172/wangsb/wgateway/compare/v0.15.5...v0.15.6) (2023-12-15)
+
+### Bug Fixes
+
+* **log:** fix log
+
+
 <a name="v0.15.5"></a>
 ## [v0.15.5](https://8.140.161.172/wangsb/wgateway/compare/v0.15.4...v0.15.5) (2023-12-14)
 
