@@ -28,7 +28,7 @@ type Router struct {
 	name            string
 	typ             Typ
 	kvs             map[string]string
-	middlewares     []string
+	middlewares     map[int]string
 	tlsSet          bool
 	tlsCertResolver string
 	tlsOption       string
@@ -54,9 +54,10 @@ func newRouter(typ Typ, name, rule, serviceName string, entryPoints []string, pr
 	}
 	kvs[EtcdKey(typRouterPrefix(typ), name, "service")] = serviceName
 	return &Router{
-		name: name,
-		typ:  typ,
-		kvs:  kvs,
+		name:        name,
+		typ:         typ,
+		kvs:         kvs,
+		middlewares: make(map[int]string),
 	}
 }
 
@@ -72,9 +73,9 @@ func NewUdpRouter(name, serviceName string, entryPoints []string) *Router {
 	return newRouter(TypUdp, name, "", serviceName, entryPoints, 0)
 }
 
-func (r *Router) AddMiddlewares(middleware ...string) {
+func (r *Router) AddMiddlewares(middleware string) {
 	if r.typ != TypUdp {
-		r.middlewares = append(r.middlewares, middleware...)
+		r.middlewares[len(r.middlewares)] = middleware
 	}
 }
 
