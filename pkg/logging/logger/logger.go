@@ -22,6 +22,7 @@ type Config struct {
 	MaxAge                int    `json:"max_age" yaml:"max_age" long:"log-maxAge" description:"Log file max age (day)." required:"true" default:"5"`
 	Level                 string `json:"level" yaml:"level"  long:"log-level" description:"Log level: debug,info, warn,error, ..." required:"true" default:"info"`
 	TraceLevel            string `json:"trace_level" yaml:"trace_level" long:"log-trace-level" description:"Log trace level: debug,info, warn,error, ..." required:"true" default:"error"`
+	Format                string `json:"format" yaml:"format" long:"log-format" description:"Log format: json 、 console" required:"false" default:"json"`
 	level                 zap.AtomicLevel
 	traceLevel            zap.AtomicLevel
 	levelInitialized      bool
@@ -140,6 +141,20 @@ func (c *Config) AddSubDir(dirname ...string) {
 		}
 	}
 }
+func (c *Config) GetFormat() string {
+	if c.Format == "" || c.Format == "json" {
+		return "json"
+	} else {
+		return "console"
+	}
+}
+func (c *Config) SetFormat(f string) {
+	if f == "" || f == "json" {
+		c.Format = "json"
+	} else {
+		c.Format = "console"
+	}
+}
 
 func CopyCnfWithLevel(cnf *Config) *Config {
 	c := CopyCnf(cnf)
@@ -226,9 +241,16 @@ func NewFileLogger(name string, cnf *Config, develop bool) (l *zap.Logger, err e
 	urlErr := utils.ToStr("lumberjack://", filepath.Join(dir, "error.log"), "?max_size=", strconv.Itoa(cnf.GetMaxSize()),
 		"&max_age=", strconv.Itoa(cnf.GetMaxAge()), "&max_backup=", strconv.Itoa(cnf.GetMaxBackup()), "&compress=1")
 
-	if l, err = logging.NewJsonLogger(name, cnf.GetLevel(), []string{url}, []string{urlErr}, develop); err != nil {
-		err = loggerError("logger init failed, err=" + err.Error())
-		return
+	if cnf.GetFormat() == "json" {
+		if l, err = logging.NewJsonLogger(name, cnf.GetLevel(), []string{url}, []string{urlErr}, develop); err != nil {
+			err = loggerError("logger init failed, err=" + err.Error())
+			return
+		}
+	} else {
+		if l, err = logging.NewConsoleLogger(name, cnf.GetLevel(), []string{url}, []string{urlErr}, develop); err != nil {
+			err = loggerError("logger init failed, err=" + err.Error())
+			return
+		}
 	}
 	l = l.WithOptions(zap.AddStacktrace(cnf.GetTraceLevel()))
 
