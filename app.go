@@ -76,9 +76,9 @@ func New(cluster *Cluster, name string, options ...Option) *Application {
 			if s.cluster != nil {
 				clusterId = s.cluster.id
 			}
-			s.logCnf.AddSubDir(filepath.Join(clusterId, "application", s.name))
+			s.logCnf.AddSubDir(filepath.Join(clusterId, s.name+"-application"))
 		}
-		s.logger, err = logger.New("", s.logCnf, s.debugger.Debug())
+		s.logger, err = logger.New("application", s.logCnf, s.debugger.Debug())
 	}
 	s.addErr(err)
 	return s
@@ -189,19 +189,28 @@ func (app *Application) Run(failedCb func(err error)) {
 		failedCb(app.errs[0])
 		return
 	}
-	app.logger.Info(app.prefixedMsg("application init starting..."))
+	app.logger.Info(app.prefixedMsg("application[", app.name, "] init starting..."))
 	app.displayConfig()
-	app.initEvent(failedCb)
+	if !app.initEvent(failedCb) {
+		return
+	}
+	app.logger.Debug(app.prefixedMsg("event manager initialized"))
+	hadServer := false
 	for _, typeServers := range app.servers {
 		for _, etServers := range typeServers {
 			for _, s := range etServers {
 				app.logger.Debug(app.prefixedMsg(s.EndType().String(), " ", s.Type().String(), " server[", s.Name(), "] init starting..."))
 				s.Run(failedCb)
 				app.logger.Debug(app.prefixedMsg(s.EndType().String(), " ", s.Type().String(), " server[", s.Name(), "] initialized"))
+				hadServer = true
 			}
 		}
 	}
-	app.logger.Info(app.prefixedMsg("services initialized"))
+	if !hadServer {
+		app.logger.Warn(app.prefixedMsg("no services registered"))
+	} else {
+		app.logger.Info(app.prefixedMsg("services initialized"))
+	}
 	if len(app.children) > 0 {
 		for _, sub := range app.children {
 			sub.With(Context(app.ctx))
@@ -216,7 +225,10 @@ func (app *Application) Run(failedCb func(err error)) {
 		}
 	}
 	app.logger.Info(app.prefixedMsg("sub-applications initialized"))
-	app.logger.Info(app.prefixedMsg("application initialized"))
+	if app.register == nil {
+		app.logger.Warn(app.prefixedMsg("no server-register registered"))
+	}
+	app.logger.Info(app.prefixedMsg("application[", app.name, "] initialized"))
 }
 
 func (app *Application) displayConfig() {
@@ -330,11 +342,12 @@ func (app *Application) DoUnregister(regInfo *regCenter.RegInfo) error {
 	return nil
 }
 
-func (app *Application) initEvent(failedCb func(err error)) {
+func (app *Application) initEvent(failedCb func(err error)) bool {
 	if err := event.Init(app.event); err != nil {
 		failedCb(err)
+		return false
 	}
-	app.logger.Debug(app.prefixedMsg("event manager initialized"))
+	return true
 }
 
 func (app *Application) addErr(err error) {

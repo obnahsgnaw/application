@@ -210,7 +210,11 @@ func NewFileLogger(name string, cnf *Config, develop bool) (l *zap.Logger, err e
 		err = loggerError("trace level is invalid, err=" + err.Error())
 		return
 	}
-	url := utils.ToStr("lumberjack://", filepath.Join(dir, "log.log"), "?max_size=", strconv.Itoa(cnf.GetMaxSize()),
+	filename := name
+	if filename == "" {
+		filename = "log"
+	}
+	url := utils.ToStr("lumberjack://", filepath.Join(dir, filename+".log"), "?max_size=", strconv.Itoa(cnf.GetMaxSize()),
 		"&max_age=", strconv.Itoa(cnf.GetMaxAge()), "&max_backup=", strconv.Itoa(cnf.GetMaxBackup()), "&compress=1")
 	urlErr := utils.ToStr("lumberjack://", filepath.Join(dir, "error.log"), "?max_size=", strconv.Itoa(cnf.GetMaxSize()),
 		"&max_age=", strconv.Itoa(cnf.GetMaxAge()), "&max_backup=", strconv.Itoa(cnf.GetMaxBackup()), "&compress=1")
@@ -224,8 +228,8 @@ func NewFileLogger(name string, cnf *Config, develop bool) (l *zap.Logger, err e
 	return
 }
 
-func NewCliLogger(name string, level zap.AtomicLevel, develop bool) (l *zap.Logger, err error) {
-	if l, err = logging.NewCliLogger(name, level, develop); err == nil {
+func NewCliLogger(_ string, level zap.AtomicLevel, develop bool) (l *zap.Logger, err error) {
+	if l, err = logging.NewCliLogger("", level, develop); err == nil {
 		l = l.WithOptions(zap.AddStacktrace(zap.FatalLevel))
 	}
 	return
