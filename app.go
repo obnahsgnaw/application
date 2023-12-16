@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"github.com/obnahsgnaw/application/endtype"
 	"github.com/obnahsgnaw/application/pkg/debug"
 	"github.com/obnahsgnaw/application/pkg/dynamic"
@@ -308,37 +309,39 @@ func (app *Application) AddChild(apps ...*Application) {
 }
 
 // DoRegister register
-func (app *Application) DoRegister(regInfo *regCenter.RegInfo) error {
+func (app *Application) DoRegister(regInfo *regCenter.RegInfo, cb func(string)) error {
 	if !app.valid() {
 		return nil
 	}
 	if app.register == nil {
-		app.logger.Warn(app.prefixedMsg("do register failed, no register to do"))
-		return nil
+		return errors.New("no register to do")
 	}
 	for k, v := range regInfo.Kvs() {
 		if err := app.register.Register(app.ctx, k, v, regInfo.Ttl); err != nil {
-			return applicationError("do register failed", err)
+			return err
 		}
-		app.logger.Debug(app.prefixedMsg("registered:", k, "=>", v))
+		if cb != nil {
+			cb(utils.ToStr("registered:", k, "=>", v))
+		}
 	}
 	return nil
 }
 
 // DoUnregister unregister
-func (app *Application) DoUnregister(regInfo *regCenter.RegInfo) error {
+func (app *Application) DoUnregister(regInfo *regCenter.RegInfo, cb func(string)) error {
 	if !app.valid() {
 		return nil
 	}
 	if app.register == nil {
-		app.logger.Warn(app.prefixedMsg("do unregister failed, no register to do"))
-		return nil
+		return errors.New("no register to do")
 	}
 	for k := range regInfo.Kvs() {
 		if err := app.register.Unregister(app.ctx, k); err != nil {
 			return applicationError("do unregister failed", err)
 		}
-		app.logger.Debug(app.prefixedMsg("unregistered:", k))
+		if cb != nil {
+			cb(utils.ToStr("unregistered:", k))
+		}
 	}
 	return nil
 }
