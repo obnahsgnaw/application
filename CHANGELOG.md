@@ -1,4 +1,12 @@
 
+<a name="v0.15.15"></a>
+## [v0.15.15](https://8.140.161.172/wangsb/wgateway/compare/v0.15.14...v0.15.15) (2023-12-16)
+
+### Bug Fixes
+
+* **app:** fix register func
+
+
 <a name="v0.15.14"></a>
 ## [v0.15.14](https://8.140.161.172/wangsb/wgateway/compare/v0.15.13...v0.15.14) (2023-12-15)
 
