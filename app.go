@@ -156,6 +156,18 @@ func (app *Application) AddServer(server Server) {
 	app.servers[server.Type()][server.EndType()][server.ID()] = server
 }
 
+// DelServer del added server
+func (app *Application) DelServer(server Server) {
+	if server == nil {
+		return
+	}
+	if _, ok := app.servers[server.Type()]; ok {
+		if _, ok = app.servers[server.Type()][server.EndType()]; !ok {
+			delete(app.servers[server.Type()][server.EndType()], server.ID())
+		}
+	}
+}
+
 // GetTypeServers return servers
 func (app *Application) GetTypeServers(typ servertype.ServerType) map[endtype.EndType]map[string]Server {
 	if typ == "" {
