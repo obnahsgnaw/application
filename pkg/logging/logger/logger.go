@@ -219,6 +219,11 @@ func loggerError(msg string) error {
 
 func NewFileLogger(name string, cnf *Config, develop bool) (l *zap.Logger, err error) {
 	var dir string
+	defer func() {
+		if l == nil {
+			l, _ = NewCliLogger(name, zap.NewAtomicLevelAt(zapcore.DebugLevel), true)
+		}
+	}()
 
 	if err = sinks.RegisterLumberjackSink(); err != nil {
 		return nil, err
