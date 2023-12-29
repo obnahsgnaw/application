@@ -1,4 +1,20 @@
 
+<a name="v0.16.2"></a>
+## [v0.16.2](https://8.140.161.172/wangsb/wgateway/compare/v0.16.1...v0.16.2) (2023-12-29)
+
+### Bug Fixes
+
+* **logger:** fix lumberjac file path for win
+
+
+<a name="v0.16.1"></a>
+## [v0.16.1](https://8.140.161.172/wangsb/wgateway/compare/v0.16.0...v0.16.1) (2023-12-28)
+
+### Bug Fixes
+
+* **logger:** x
+
+
 <a name="v0.16.0"></a>
 ## [v0.16.0](https://8.140.161.172/wangsb/wgateway/compare/v0.15.16...v0.16.0) (2023-12-22)
 
