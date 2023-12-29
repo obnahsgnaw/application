@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"io"
+	url2 "net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -244,10 +245,21 @@ func NewFileLogger(name string, cnf *Config, develop bool) (l *zap.Logger, err e
 		err = loggerError("trace level is invalid, err=" + err.Error())
 		return
 	}
-	url := utils.ToStr("lumberjack://", filepath.Join(dir, cnf.GetFilename()+".log"), "?max_size=", strconv.Itoa(cnf.GetMaxSize()),
-		"&max_age=", strconv.Itoa(cnf.GetMaxAge()), "&max_backup=", strconv.Itoa(cnf.GetMaxBackup()), "&compress=1")
-	urlErr := utils.ToStr("lumberjack://", filepath.Join(dir, cnf.GetFilename()+"-error.log"), "?max_size=", strconv.Itoa(cnf.GetMaxSize()),
-		"&max_age=", strconv.Itoa(cnf.GetMaxAge()), "&max_backup=", strconv.Itoa(cnf.GetMaxBackup()), "&compress=1")
+	qr := url2.Values{}
+	qr.Add("path", filepath.Join(dir, cnf.GetFilename()+".log"))
+	qr.Add("max_size", strconv.Itoa(cnf.GetMaxSize()))
+	qr.Add("max_age", strconv.Itoa(cnf.GetMaxAge()))
+	qr.Add("max_backup", strconv.Itoa(cnf.GetMaxBackup()))
+	qr.Add("compress", "1")
+	url := utils.ToStr("lumberjack://file?", qr.Encode())
+
+	eqr := url2.Values{}
+	eqr.Add("path", filepath.Join(dir, cnf.GetFilename()+"-error.log"))
+	eqr.Add("max_size", strconv.Itoa(cnf.GetMaxSize()))
+	eqr.Add("max_age", strconv.Itoa(cnf.GetMaxAge()))
+	eqr.Add("max_backup", strconv.Itoa(cnf.GetMaxBackup()))
+	eqr.Add("compress", "1")
+	urlErr := utils.ToStr("lumberjack://file?", eqr.Encode())
 
 	if cnf.GetFormat() == "json" {
 		if l, err = logging.NewJsonLogger(name, cnf.GetLevel(), []string{url}, []string{urlErr}, develop); err != nil {
