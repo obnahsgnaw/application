@@ -53,11 +53,12 @@ func RegisterLumberjackSink() error {
 		var maxSize = 10
 		var maxAge = 30
 		var maxBackup = 5
-		fileName := url.Host + url.Path
-		if fileName == "" {
+		var fileName = ""
+		query := url.Query()
+
+		if fileName = query.Get("path"); fileName == "" {
 			return nil, lumberjacSinkErr("filename is empty")
 		}
-		query := url.Query()
 		if sizeStr := query.Get("max_size"); sizeStr != "" {
 			size, err := strconv.Atoi(sizeStr)
 			if err != nil {
