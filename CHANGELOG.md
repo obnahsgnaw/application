@@ -1,4 +1,16 @@
 
+<a name="v0.16.3"></a>
+## [v0.16.3](https://8.140.161.172/wangsb/wgateway/compare/v0.16.2...v0.16.3) (2024-02-25)
+
+### Code Refactoring
+
+* **x:** x
+
+### Features
+
+* **app.go:** added callback of run
+
+
 <a name="v0.16.2"></a>
 ## [v0.16.2](https://8.140.161.172/wangsb/wgateway/compare/v0.16.1...v0.16.2) (2023-12-29)
 
