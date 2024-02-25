@@ -34,20 +34,21 @@ func applicationError(msg string, err error) error {
 
 // Application identify a project
 type Application struct {
-	name     string
-	ctx      context.Context
-	cancel   context.CancelFunc
-	cluster  *Cluster
-	logger   *zap.Logger
-	logCnf   *logger.Config
-	debugger debug.Debugger
-	servers  map[servertype.ServerType]map[endtype.EndType]map[string]Server
-	event    *event.Manger
-	register regCenter.Register
-	errs     []error
-	children []*Application
-	regTtl   int64
-	releases []func()
+	name      string
+	ctx       context.Context
+	cancel    context.CancelFunc
+	cluster   *Cluster
+	logger    *zap.Logger
+	logCnf    *logger.Config
+	debugger  debug.Debugger
+	servers   map[servertype.ServerType]map[endtype.EndType]map[string]Server
+	event     *event.Manger
+	register  regCenter.Register
+	errs      []error
+	children  []*Application
+	regTtl    int64
+	releases  []func()
+	callbacks []func()
 }
 
 // New return a new application
@@ -245,6 +246,17 @@ func (app *Application) Run(failedCb func(err error)) {
 	app.logger.Info(app.prefixedMsg("initialized"))
 }
 
+func (app *Application) handleCallback() {
+	for _, cb := range app.callbacks {
+		cb()
+	}
+	if len(app.children) > 0 {
+		for _, sub := range app.children {
+			sub.handleCallback()
+		}
+	}
+}
+
 func (app *Application) displayConfig() {
 	debugDesc := "debug=false"
 	if app.debugger.Debug() {
@@ -382,4 +394,10 @@ func (app *Application) prefixedMsg(msg ...string) string {
 
 func (app *Application) valid() bool {
 	return len(app.errs) == 0
+}
+
+func (app *Application) RegisterCallback(cb func()) {
+	if cb != nil {
+		app.callbacks = append(app.callbacks, cb)
+	}
 }
