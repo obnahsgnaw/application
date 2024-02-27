@@ -200,6 +200,7 @@ func (app *Application) GetTypeServer(typ servertype.ServerType, et endtype.EndT
 
 // Run application
 func (app *Application) Run(failedCb func(err error)) {
+	defer app.handleCallback()
 	if len(app.errs) > 0 {
 		failedCb(app.errs[0])
 		return
@@ -247,6 +248,7 @@ func (app *Application) Run(failedCb func(err error)) {
 }
 
 func (app *Application) handleCallback() {
+	app.logger.Debug(app.prefixedMsg("handle run after callback"))
 	for _, cb := range app.callbacks {
 		cb()
 	}
