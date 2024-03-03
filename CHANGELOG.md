@@ -1,4 +1,12 @@
 
+<a name="v0.16.5"></a>
+## [v0.16.5](https://8.140.161.172/wangsb/wgateway/compare/v0.16.4...v0.16.5) (2024-03-04)
+
+### Bug Fixes
+
+* **pkg traefik mid:** fix forword body
+
+
 <a name="v0.16.4"></a>
 ## [v0.16.4](https://8.140.161.172/wangsb/wgateway/compare/v0.16.3...v0.16.4) (2024-02-27)
 
