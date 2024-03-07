@@ -36,7 +36,10 @@ func (e *EtcdRegister) Register(ctx context.Context, key, val string, ttl int64)
 }
 
 func (e *EtcdRegister) Unregister(ctx context.Context, key string) error {
-	return nil
+	if e.register == nil {
+		return nil
+	}
+	return e.register.Delete(ctx, key)
 }
 
 func (e *EtcdRegister) Watch(ctx context.Context, keyPrefix string, handler func(key string, val string, isDel bool)) error {
