@@ -297,12 +297,6 @@ func (app *Application) Release() {
 		}
 	}
 
-	if app.register != nil {
-		if etcd, ok := app.register.(*regCenter.EtcdRegister); ok {
-			etcd.Release()
-		}
-	}
-
 	app.logger.Info(app.prefixedMsg("released"))
 	_ = app.logger.Sync()
 }
