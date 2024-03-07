@@ -1,4 +1,12 @@
 
+<a name="v0.16.6"></a>
+## [v0.16.6](https://8.140.161.172/wangsb/wgateway/compare/v0.16.5...v0.16.6) (2024-03-07)
+
+### Bug Fixes
+
+* **logging and security:** fix multi core logger and ras long message
+
+
 <a name="v0.16.5"></a>
 ## [v0.16.5](https://8.140.161.172/wangsb/wgateway/compare/v0.16.4...v0.16.5) (2024-03-04)
 
