@@ -13,7 +13,6 @@ import (
 	"github.com/obnahsgnaw/application/service/event"
 	"github.com/obnahsgnaw/application/service/regCenter"
 	"go.uber.org/zap"
-	"path/filepath"
 	"strconv"
 )
 
@@ -53,7 +52,6 @@ type Application struct {
 
 // New return a new application
 func New(cluster *Cluster, name string, options ...Option) *Application {
-	var err error
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &Application{
 		name:     name,
@@ -73,17 +71,8 @@ func New(cluster *Cluster, name string, options ...Option) *Application {
 	}
 	s.With(options...)
 	if s.logger == nil {
-		if s.logCnf != nil {
-			clusterId := ""
-			if s.cluster != nil {
-				clusterId = s.cluster.id
-			}
-			s.logCnf.AddSubDir(filepath.Join("cluster-"+clusterId, "application-"+s.name))
-			s.logCnf.SetFilename("application-" + s.name)
-		}
-		s.logger, err = logger.New("application:"+s.name, s.logCnf, s.debugger.Debug())
+		s.initLogger(s.logCnf)
 	}
-	s.addErr(err)
 	return s
 }
 
@@ -311,10 +300,8 @@ func (app *Application) Release() {
 			r()
 		}
 	}
-	if app.logger != nil {
-		app.logger.Info(app.prefixedMsg("released"))
-		_ = app.logger.Sync()
-	}
+	app.logger.Info(app.prefixedMsg("released"))
+	_ = app.logger.Sync()
 }
 
 func (app *Application) AddRelease(r func()) {
@@ -392,6 +379,20 @@ func (app *Application) Errs() []error {
 
 func (app *Application) prefixedMsg(msg ...string) string {
 	return utils.ToStr(msg...)
+}
+
+func (app *Application) initLogger(config *logger.Config) {
+	if config != nil {
+		app.logCnf = config
+		clusterId := ""
+		if app.cluster != nil {
+			clusterId = app.cluster.id
+		}
+		app.logCnf.SetFilename(clusterId)
+	}
+	var err error
+	app.logger, err = logger.NewLogger(app.logCnf, app.debugger.Debug())
+	app.addErr(err)
 }
 
 func (app *Application) valid() bool {
