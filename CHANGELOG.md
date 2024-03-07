@@ -1,4 +1,12 @@
 
+<a name="v0.16.9"></a>
+## [v0.16.9](https://8.140.161.172/wangsb/wgateway/compare/v0.16.8...v0.16.9) (2024-03-07)
+
+### Code Refactoring
+
+* **x:** x
+
+
 <a name="v0.16.8"></a>
 ## [v0.16.8](https://8.140.161.172/wangsb/wgateway/compare/v0.16.7...v0.16.8) (2024-03-07)
 
