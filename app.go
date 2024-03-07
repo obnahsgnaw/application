@@ -220,7 +220,7 @@ func (app *Application) Run(failedCb func(err error)) {
 		for _, sub := range app.children {
 			sub.With(Context(app.ctx))
 			sub.debugger = app.debugger
-			sub.logger = app.logger
+			sub.logger = app.logger.Named(sub.name)
 			sub.logCnf = app.logCnf
 			sub.register = app.register
 			sub.regTtl = app.regTtl
@@ -392,6 +392,7 @@ func (app *Application) initLogger(config *logger.Config) {
 	}
 	var err error
 	app.logger, err = logger.NewLogger(app.logCnf, app.debugger.Debug())
+	app.logger = app.logger.Named(app.name)
 	app.addErr(err)
 }
 
