@@ -160,12 +160,23 @@ func (rc *RsaCrypto) Sign(data []byte, priKey []byte, b64 bool) (signature []byt
 		return
 	}
 
-	hashed, err := Hash(data, SignHash)
-	if err != nil {
-		return
+	maxLen := privateKey.PublicKey.N.BitLen() / 8
+	chunks := split(data, maxLen)
+	buffer := bytes.NewBufferString("")
+	for _, chunk := range chunks {
+		hashed, err1 := Hash(chunk, SignHash)
+		if err1 != nil {
+			return
+		}
+
+		chunkData, err2 := rsa.SignPKCS1v15(rand.Reader, privateKey, SignHash, hashed)
+		if err2 != nil {
+			return
+		}
+		buffer.Write(chunkData)
 	}
 
-	signature, err = rsa.SignPKCS1v15(rand.Reader, privateKey, SignHash, hashed)
+	signature = buffer.Bytes()
 
 	if b64 {
 		signature = []byte(RsaEncoding.EncodeToString(signature))
@@ -188,12 +199,20 @@ func (rc *RsaCrypto) Verify(data, signature, pubKey []byte, b64 bool) error {
 		return err
 	}
 
-	hashed, err := Hash(data, SignHash)
-	if err != nil {
-		return err
+	maxLen := publicKey.N.BitLen() / 8
+	chunks := split(data, maxLen)
+	for _, chunk := range chunks {
+		hashed, err1 := Hash(chunk, SignHash)
+		if err1 != nil {
+			return err1
+		}
+		err = rsa.VerifyPKCS1v15(publicKey, SignHash, hashed, signature)
+		if err != nil {
+			return err
+		}
 	}
 
-	return rsa.VerifyPKCS1v15(publicKey, SignHash, hashed, signature)
+	return nil
 }
 
 func (rc *RsaCrypto) Disable() {
