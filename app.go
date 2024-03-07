@@ -222,8 +222,10 @@ func (app *Application) Run(failedCb func(err error)) {
 			sub.debugger = app.debugger
 			sub.logger = app.logger.Named(sub.name)
 			sub.logCnf = app.logCnf
-			sub.register = app.register
-			sub.regTtl = app.regTtl
+			if sub.register == nil {
+				sub.register = app.register
+				sub.regTtl = app.regTtl
+			}
 			app.logger.Debug(app.prefixedMsg("sub-application[", sub.name, "] init starting..."))
 			sub.Run(failedCb)
 			app.logger.Debug(app.prefixedMsg("sub-application[", sub.name, "] initialized"))
@@ -283,12 +285,6 @@ func (app *Application) Release() {
 		}
 	}
 
-	if app.register != nil {
-		if etcd, ok := app.register.(*regCenter.EtcdRegister); ok {
-			etcd.Release()
-		}
-	}
-
 	if len(app.children) > 0 {
 		for _, sub := range app.children {
 			sub.Release()
@@ -300,6 +296,13 @@ func (app *Application) Release() {
 			r()
 		}
 	}
+
+	if app.register != nil {
+		if etcd, ok := app.register.(*regCenter.EtcdRegister); ok {
+			etcd.Release()
+		}
+	}
+
 	app.logger.Info(app.prefixedMsg("released"))
 	_ = app.logger.Sync()
 }

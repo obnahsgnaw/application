@@ -77,13 +77,19 @@ func (r *EtcdRegister) EtcdKey(key ...string) string {
 	return strings.Join(keys, "/")
 }
 
-// Clear registered key
+// Clear prefixed key
 func (r *EtcdRegister) Clear(ctx context.Context, prefixedKey string) (deleted int64, err error) {
 	resp, err := r.client.Delete(ctx, prefixedKey, clientv3.WithPrefix())
 	if err != nil {
 		return 0, err
 	}
 	return resp.Deleted, nil
+}
+
+// Delete key
+func (r *EtcdRegister) Delete(ctx context.Context, key string) error {
+	_, err := r.client.Delete(ctx, key)
+	return err
 }
 
 // RegisterSimpleServer register simple server to etcd
