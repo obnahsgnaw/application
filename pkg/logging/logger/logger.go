@@ -189,7 +189,11 @@ func NewAccessWriter(cnf *Config, debug bool) (w io.Writer, err error) {
 		if dir, err = cnf.GetValidDir(); err != nil {
 			return
 		}
-		w = writer.NewFileWriter(filepath.Join(dir, "access.log"), cnf.GetMaxSize(), cnf.GetMaxBackup(), cnf.GetMaxAge(), true)
+		name := "access.log"
+		if cnf.fileName != "" {
+			name = cnf.fileName + "-" + name
+		}
+		w = writer.NewFileWriter(filepath.Join(dir, name), cnf.GetMaxSize(), cnf.GetMaxBackup(), cnf.GetMaxAge(), true)
 	}
 	if w == nil && debug {
 		w = writer.NewStdWriter()
@@ -203,7 +207,11 @@ func NewErrorWriter(cnf *Config, debug bool) (w io.Writer, err error) {
 		if dir, err = cnf.GetValidDir(); err != nil {
 			return
 		}
-		w = writer.NewFileWriter(filepath.Join(dir, "error.log"), cnf.GetMaxSize(), cnf.GetMaxBackup(), cnf.GetMaxAge(), true)
+		name := "error.log"
+		if cnf.fileName != "" {
+			name = cnf.fileName + "-" + name
+		}
+		w = writer.NewFileWriter(filepath.Join(dir, name), cnf.GetMaxSize(), cnf.GetMaxBackup(), cnf.GetMaxAge(), true)
 	}
 	if w == nil && debug {
 		w = writer.NewStdWriter()
