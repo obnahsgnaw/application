@@ -55,48 +55,39 @@ func Grant(ctx context.Context, c *clientv3.Client, ttl int64, opTtl time.Durati
 	return c.Grant(ctx1, ttl)
 }
 
-func KeepAlive(ctx context.Context, c *clientv3.Client, leaseId clientv3.LeaseID, retryCb func()) error {
-	alive, err := c.KeepAlive(ctx, leaseId)
-	if err != nil {
-		return err
+func KeepAlive(ctx context.Context, c *clientv3.Client, leaseId clientv3.LeaseID, retry func() error) (err error) {
+	var alive <-chan *clientv3.LeaseKeepAliveResponse
+
+	if alive, err = c.KeepAlive(ctx, leaseId); err != nil {
+		return
 	}
-	var expiredChan = make(chan bool)
 	go func() {
 		for {
 			select {
-			case <-ctx.Done():
-				return
 			case aliveResp := <-alive:
 				if aliveResp == nil {
-					expiredChan <- true
-					return
+					for {
+						if err = retry(); err != nil {
+							time.Sleep(time.Second * 2)
+							continue
+						}
+						return
+					}
 				}
-			}
-		}
-	}()
-	go func() {
-		for {
-			select {
-			case <-expiredChan:
-				if retryCb != nil {
-					retryCb()
-				}
-				return
 			case <-ctx.Done():
 				return
 			}
 		}
 	}()
-
-	return nil
+	return
 }
 
-func GrantAndKeepalive(ctx context.Context, c *clientv3.Client, ttl int64, opTtl time.Duration, retryCb func()) (*clientv3.LeaseGrantResponse, error) {
+func GrantAndKeepalive(ctx context.Context, c *clientv3.Client, ttl int64, opTtl time.Duration, retry func() error) (*clientv3.LeaseGrantResponse, error) {
 	lease, err := Grant(ctx, c, ttl, opTtl)
 	if err != nil {
 		return nil, err
 	}
-	err = KeepAlive(ctx, c, lease.ID, retryCb)
+	err = KeepAlive(ctx, c, lease.ID, retry)
 	if err != nil {
 		return nil, err
 	}
@@ -167,8 +158,8 @@ func PutWithKeepalive(ctx context.Context, c *clientv3.Client, key, val string, 
 		return err
 	}
 
-	return KeepAlive(ctx, c, lease.ID, func() {
-		_ = PutWithKeepalive(ctx, c, key, val, leaseTtl, opTimeout)
+	return KeepAlive(ctx, c, lease.ID, func() error {
+		return PutWithKeepalive(ctx, c, key, val, leaseTtl, opTimeout)
 	})
 }
 
