@@ -96,8 +96,8 @@ func (s *SingleService) listenSingleton() {
 
 func (s *SingleService) registerSingleton() (err error) {
 	var lease *clientv3.LeaseGrantResponse
-	lease, err = GrantAndKeepalive(s.ctx, s.c, s.ttl, s.opeTimeout, func() {
-		_ = s.registerSingleton()
+	lease, err = GrantAndKeepalive(s.ctx, s.c, s.ttl, s.opeTimeout, func() error {
+		return s.registerSingleton()
 	})
 	if err != nil {
 		return

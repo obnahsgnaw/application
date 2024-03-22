@@ -41,7 +41,7 @@ func PutsWithKeepalive(ctx context.Context, c *clientv3.Client, kvs map[string]s
 		return err
 	}
 
-	return KeepAlive(ctx, c, lease.ID, func() {
-		_ = PutsWithKeepalive(ctx, c, kvs, leaseTtl, opTimeout)
+	return KeepAlive(ctx, c, lease.ID, func() error {
+		return PutsWithKeepalive(ctx, c, kvs, leaseTtl, opTimeout)
 	})
 }
