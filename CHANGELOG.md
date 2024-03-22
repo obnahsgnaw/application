@@ -1,4 +1,12 @@
 
+<a name="v0.16.12"></a>
+## [v0.16.12](https://8.140.161.172/wangsb/wgateway/compare/v0.16.11...v0.16.12) (2024-03-22)
+
+### Performance Improvements
+
+* **etcd:** perf etcd keepalive
+
+
 <a name="v0.16.11"></a>
 ## [v0.16.11](https://8.140.161.172/wangsb/wgateway/compare/v0.16.10...v0.16.11) (2024-03-07)
 
