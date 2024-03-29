@@ -11,11 +11,11 @@ func NewWrappedError(msg string, err error) error {
 		return errors.New(msg)
 	}
 
-	return fmt.Errorf(msg+" %w", err)
+	return fmt.Errorf(msg+": %w", err)
 }
 
 func TitledError(title, msg string, err error) error {
-	titleMsg := ToStr(title, ": ", msg)
+	titleMsg := ToStr(title, ", ", msg)
 	if err != nil {
 		return NewWrappedError(titleMsg, err)
 	}

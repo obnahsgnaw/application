@@ -2,6 +2,7 @@ package regCenter
 
 import (
 	"context"
+	"errors"
 	"github.com/obnahsgnaw/application/pkg/etcd"
 	"github.com/obnahsgnaw/application/pkg/etcd/registercenter"
 	"time"
@@ -12,6 +13,12 @@ type EtcdRegister struct {
 }
 
 func NewEtcdRegister(endpoints []string, opTimeout time.Duration) (*EtcdRegister, error) {
+	if opTimeout <= 0 {
+		opTimeout = 5 * time.Second
+	}
+	if len(endpoints) == 0 {
+		return nil, errors.New("etcd endpoints is required")
+	}
 	r := &EtcdRegister{
 		register: registercenter.New("", "", endpoints, opTimeout),
 	}

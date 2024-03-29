@@ -6,40 +6,9 @@ import (
 	"github.com/obnahsgnaw/application/pkg/dynamic"
 	"github.com/obnahsgnaw/application/pkg/logging/logger"
 	"github.com/obnahsgnaw/application/service/regCenter"
-	"time"
 )
 
 type Option func(s *Application)
-
-func RegTtl(ttl int64) Option {
-	return func(s *Application) {
-		s.regTtl = ttl
-	}
-}
-
-func Debugger(debugger debug.Debugger) Option {
-	return func(s *Application) {
-		if debugger != nil {
-			s.debugger = debugger
-		}
-	}
-}
-
-func Debug(cb func() bool) Option {
-	return func(s *Application) {
-		if cb != nil {
-			s.debugger = debug.New(dynamic.NewBool(cb))
-		}
-	}
-}
-
-func Logger(config *logger.Config) Option {
-	return func(s *Application) {
-		if config != nil {
-			s.initLogger(config)
-		}
-	}
-}
 
 func Context(ctx context.Context) Option {
 	return func(s *Application) {
@@ -49,28 +18,39 @@ func Context(ctx context.Context) Option {
 	}
 }
 
-func Register(register regCenter.Register) Option {
+func CusCluster(c *Cluster) Option {
 	return func(s *Application) {
-		if register != nil {
-			s.register = register
+		if c != nil {
+			s.cluster = c
 		}
 	}
 }
 
-func EtcdRegister(endpoints []string, opeTimeout time.Duration) Option {
+func Register(register regCenter.Register, ttl int64) Option {
 	return func(s *Application) {
-		if opeTimeout == 0 {
-			opeTimeout = 5 * time.Second
+		if register != nil {
+			s.register = register
+			s.cusRegister = true
 		}
-		if len(endpoints) == 0 {
-			s.addErr(applicationError("with EtcdRegister failed, etcd endpoint required", nil))
-			return
+		if ttl > 0 {
+			s.regTtl = ttl
 		}
-		etcdReg, err := regCenter.NewEtcdRegister(endpoints, opeTimeout)
-		if err != nil {
-			s.addErr(applicationError("with EtcdRegister new etcd register failed", err))
-			return
+	}
+}
+
+// Logger 需要在 CusCluster 和 debug之后
+func Logger(config *logger.Config) Option {
+	return func(s *Application) {
+		if config != nil {
+			s.initLogger(config)
 		}
-		s.With(Register(etcdReg))
+	}
+}
+
+func Debug(cb func() bool) Option {
+	return func(s *Application) {
+		if cb != nil {
+			s.debugger = debug.New(dynamic.NewBool(cb))
+		}
 	}
 }
