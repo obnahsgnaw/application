@@ -1,4 +1,12 @@
 
+<a name="v0.17.0"></a>
+## [v0.17.0](https://8.140.161.172/wangsb/wgateway/compare/v0.16.12...v0.17.0) (2024-03-29)
+
+### Code Refactoring
+
+* **app.go:** change code
+
+
 <a name="v0.16.12"></a>
 ## [v0.16.12](https://8.140.161.172/wangsb/wgateway/compare/v0.16.11...v0.16.12) (2024-03-22)
 
