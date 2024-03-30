@@ -43,6 +43,7 @@ func Logger(config *logger.Config) Option {
 	return func(s *Application) {
 		if config != nil {
 			s.logCnf = config
+			s.logCus = true
 		}
 	}
 }

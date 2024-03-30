@@ -222,6 +222,39 @@ func NewErrorWriter(cnf *Config, debug bool) (w io.Writer, err error) {
 	return
 }
 
+func NewDefAccessWriter(cnf *Config, debug bool) (io.Writer, error) {
+	var wts []io.Writer
+	if cnf != nil {
+		if w, err := NewAccessWriter(cnf, debug); err == nil {
+			wts = append(wts, w)
+		} else {
+			return nil, err
+		}
+	}
+	if debug {
+		wts = append(wts, writer.NewStdWriter())
+	}
+
+	return writer.NewMultiWriter(wts...), nil
+}
+
+func NewDefErrorWriter(cnf *Config, debug bool) (io.Writer, error) {
+	var wts []io.Writer
+	if cnf != nil {
+		if w, err := NewErrorWriter(cnf, debug); err == nil {
+			wts = append(wts, w)
+		} else {
+			return nil, err
+		}
+
+	}
+	if debug {
+		wts = append(wts, writer.NewStdWriter())
+	}
+
+	return writer.NewMultiWriter(wts...), nil
+}
+
 func loggerError(msg string) error {
 	return utils.TitledError("logger error", msg, nil)
 }

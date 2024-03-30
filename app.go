@@ -34,6 +34,7 @@ type Application struct {
 	cluster     *Cluster
 	logger      *zap.Logger
 	logCnf      *logger.Config
+	logCus      bool
 	debugger    debug.Debugger
 	event       *event.Manger
 	register    regCenter.Register
@@ -62,8 +63,12 @@ func New(name string, options ...Option) *Application {
 		register: regCenter.NewNone(),
 		servers:  make(map[servertype.ServerType]map[endtype.EndType]map[string]Server),
 		regTtl:   5,
+		logCnf:   &logger.Config{},
 	}
 	s.With(options...)
+	if s.logger == nil {
+		_ = s.initLogger()
+	}
 	return s
 }
 
@@ -178,8 +183,10 @@ func (app *Application) GetTypeServer(typ servertype.ServerType, et endtype.EndT
 // Run application
 func (app *Application) Run(failedCb func(err error)) {
 	defer app.handleCallback()
-	if err := app.initLogger(); err != nil {
-		failedCb(err)
+	if app.logCus {
+		if err := app.initLogger(); err != nil {
+			failedCb(err)
+		}
 	}
 	app.logger.Info(app.prefixedMsg("init starting..."))
 	app.displayConfig()
@@ -355,11 +362,7 @@ func (app *Application) prefixedMsg(msg ...string) string {
 }
 
 func (app *Application) initLogger() (err error) {
-	if app.logCnf == nil {
-		app.logCnf = &logger.Config{}
-	}
 	app.logCnf.SetFilename(app.cluster.id)
-
 	app.logger, err = logger.NewLogger(app.logCnf, app.debugger.Debug())
 	if err != nil {
 		return
