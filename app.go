@@ -63,7 +63,6 @@ func New(name string, options ...Option) *Application {
 		servers:  make(map[servertype.ServerType]map[endtype.EndType]map[string]Server),
 		regTtl:   5,
 	}
-	s.initLogger(nil)
 	s.With(options...)
 	return s
 }
@@ -179,9 +178,8 @@ func (app *Application) GetTypeServer(typ servertype.ServerType, et endtype.EndT
 // Run application
 func (app *Application) Run(failedCb func(err error)) {
 	defer app.handleCallback()
-	if len(app.errs) > 0 {
-		failedCb(app.errs[0])
-		return
+	if err := app.initLogger(); err != nil {
+		failedCb(err)
 	}
 	app.logger.Info(app.prefixedMsg("init starting..."))
 	app.displayConfig()
@@ -190,7 +188,7 @@ func (app *Application) Run(failedCb func(err error)) {
 	}) {
 		return
 	}
-	app.logger.Debug(app.prefixedMsg("event manager initialized"))
+	app.logger.Info(app.prefixedMsg("event manager initialized"))
 	hadServer := false
 	for _, typeServers := range app.servers {
 		for _, etServers := range typeServers {
@@ -261,8 +259,10 @@ func (app *Application) Release() {
 		}
 	}
 
-	app.logger.Info(app.prefixedMsg("released"))
-	_ = app.logger.Sync()
+	if app.logger != nil {
+		app.logger.Info(app.prefixedMsg("released"))
+		_ = app.logger.Sync()
+	}
 }
 
 func (app *Application) AddRelease(r func()) {
@@ -284,9 +284,6 @@ func (app *Application) AddChild(apps ...*Application) {
 
 // DoRegister register
 func (app *Application) DoRegister(regInfo *regCenter.RegInfo, cb func(string)) error {
-	if !app.valid() {
-		return nil
-	}
 	for k, v := range regInfo.Kvs() {
 		if err := app.register.Register(app.ctx, k, v, regInfo.Ttl); err != nil {
 			return app.error("register failed", err)
@@ -300,9 +297,6 @@ func (app *Application) DoRegister(regInfo *regCenter.RegInfo, cb func(string)) 
 
 // DoUnregister unregister
 func (app *Application) DoUnregister(regInfo *regCenter.RegInfo, cb func(string)) error {
-	if !app.valid() {
-		return nil
-	}
 	for k := range regInfo.Kvs() {
 		if err := app.register.Unregister(app.ctx, k); err != nil {
 			return app.error("unregister failed", err)
@@ -318,10 +312,6 @@ func (app *Application) RegisterCallback(cb func()) {
 	if cb != nil {
 		app.callbacks = append(app.callbacks, cb)
 	}
-}
-
-func (app *Application) Errs() []error {
-	return app.errs
 }
 
 func (app *Application) initEvent(failedCb func(err error)) bool {
@@ -341,7 +331,6 @@ func (app *Application) handleCallback() {
 			sub.handleCallback()
 		}
 	}
-	app.logger.Debug(app.prefixedMsg("startup callback initialized"))
 }
 
 func (app *Application) displayConfig() {
@@ -361,36 +350,24 @@ func (app *Application) displayConfig() {
 	)))
 }
 
-func (app *Application) addErr(err error) {
-	if err != nil {
-		app.errs = append(app.errs, err)
-	}
-}
-
 func (app *Application) prefixedMsg(msg ...string) string {
 	return utils.ToStr(msg...)
 }
 
-func (app *Application) initLogger(config *logger.Config) {
-	var err error
-
-	if config == nil {
-		config = &logger.Config{}
+func (app *Application) initLogger() (err error) {
+	if app.logCnf == nil {
+		app.logCnf = &logger.Config{}
 	}
-	app.logCnf = config
 	app.logCnf.SetFilename(app.cluster.id)
 
 	app.logger, err = logger.NewLogger(app.logCnf, app.debugger.Debug())
-	app.logger = app.logger.Named(app.name)
 	if err != nil {
-		app.addErr(app.error("init logger failed", err))
+		return
 	}
+	app.logger = app.logger.Named(app.name)
+	return
 }
 
 func (app *Application) error(msg string, err error) error {
 	return utils.TitledError("application["+app.name+"] error", msg, err)
-}
-
-func (app *Application) valid() bool {
-	return len(app.errs) == 0
 }
