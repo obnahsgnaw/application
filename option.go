@@ -42,7 +42,7 @@ func Register(register regCenter.Register, ttl int64) Option {
 func Logger(config *logger.Config) Option {
 	return func(s *Application) {
 		if config != nil {
-			s.initLogger(config)
+			s.logCnf = config
 		}
 	}
 }
