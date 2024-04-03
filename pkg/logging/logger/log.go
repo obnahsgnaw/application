@@ -14,11 +14,16 @@ import (
 //       3. 文件采用json格式， 控制台采用console格式
 //       4. 如果都没有，返回一个空的logger
 
-func NewLogger(cnf *Config, debug bool) (l *zap.Logger, err error) {
+func NewLogger(cnf *Config, debug func() bool) (l *zap.Logger, err error) {
 	var dir string
 	var ww zapcore.WriteSyncer
-	var cw = zapcore.Lock(os.Stdout)
+	var cw = zapcore.Lock(writer.NewDynamicStdWriter(debug, os.Stdout))
 	var cores []zapcore.Core
+
+	consoleEncoderConfig := zap.NewDevelopmentEncoderConfig()
+	consoleEncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	consoleEncoder := zapcore.NewConsoleEncoder(consoleEncoderConfig)
+	cores = append(cores, zapcore.NewCore(consoleEncoder, cw, cnf.GetLevel()))
 
 	if cnf == nil {
 		err = loggerError("log config required")
@@ -46,12 +51,7 @@ func NewLogger(cnf *Config, debug bool) (l *zap.Logger, err error) {
 		ww = zapcore.AddSync(writer.NewFileWriter(filepath.Join(dir, cnf.GetFilename()+".log"), cnf.GetMaxSize(), cnf.GetMaxBackup(), cnf.GetMaxAge(), true))
 		cores = append(cores, zapcore.NewCore(jsonEncoder, ww, cnf.GetLevel()))
 	}
-	if debug {
-		consoleEncoderConfig := zap.NewDevelopmentEncoderConfig()
-		consoleEncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		consoleEncoder := zapcore.NewConsoleEncoder(consoleEncoderConfig)
-		cores = append(cores, zapcore.NewCore(consoleEncoder, cw, cnf.GetLevel()))
-	}
+
 	if len(cores) == 0 {
 		cores = append(cores, zapcore.NewNopCore())
 	}
