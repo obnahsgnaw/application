@@ -183,7 +183,7 @@ func CopyCnf(cnf *Config) *Config {
 	return &c
 }
 
-func NewAccessWriter(cnf *Config, debug bool) (w io.Writer, err error) {
+func NewAccessWriter(cnf *Config) (w io.Writer, err error) {
 	if cnf != nil && cnf.GetDir() != "" {
 		var dir string
 		if dir, err = cnf.GetValidDir(); err != nil {
@@ -194,14 +194,13 @@ func NewAccessWriter(cnf *Config, debug bool) (w io.Writer, err error) {
 			name = cnf.fileName + "-" + name
 		}
 		w = writer.NewFileWriter(filepath.Join(dir, name), cnf.GetMaxSize(), cnf.GetMaxBackup(), cnf.GetMaxAge(), true)
-	}
-	if w == nil && debug {
-		w = writer.NewStdWriter()
+	} else {
+		err = errors.New("log config invalid")
 	}
 	return
 }
 
-func NewErrorWriter(cnf *Config, debug bool) (w io.Writer, err error) {
+func NewErrorWriter(cnf *Config) (w io.Writer, err error) {
 	if cnf != nil && cnf.GetDir() != "" {
 		var dir string
 		if dir, err = cnf.GetValidDir(); err != nil {
@@ -212,44 +211,36 @@ func NewErrorWriter(cnf *Config, debug bool) (w io.Writer, err error) {
 			name = cnf.fileName + "-" + name
 		}
 		w = writer.NewFileWriter(filepath.Join(dir, name), cnf.GetMaxSize(), cnf.GetMaxBackup(), cnf.GetMaxAge(), true)
-	}
-	if w == nil && debug {
-		w = writer.NewStdWriter()
-	}
-	if w == nil {
-		w = writer.NewNullWriter()
+	} else {
+		err = errors.New("log config invalid")
 	}
 	return
 }
 
-func NewDefAccessWriter(cnf *Config, debug bool) (io.Writer, error) {
+func NewDefAccessWriter(cnf *Config, debug func() bool) (io.Writer, error) {
 	var wts []io.Writer
-	if cnf != nil {
-		if w, err := NewAccessWriter(cnf, debug); err == nil {
+	wts = append(wts, writer.NewDynamicStdWriter(debug, os.Stdout))
+	if cnf != nil && cnf.GetDir() != "" {
+		if w, err := NewAccessWriter(cnf); err == nil {
 			wts = append(wts, w)
 		} else {
 			return nil, err
 		}
-	}
-	if debug {
-		wts = append(wts, writer.NewStdWriter())
 	}
 
 	return writer.NewMultiWriter(wts...), nil
 }
 
-func NewDefErrorWriter(cnf *Config, debug bool) (io.Writer, error) {
+func NewDefErrorWriter(cnf *Config, debug func() bool) (io.Writer, error) {
 	var wts []io.Writer
+	wts = append(wts, writer.NewDynamicStdWriter(debug, os.Stderr))
 	if cnf != nil {
-		if w, err := NewErrorWriter(cnf, debug); err == nil {
+		if w, err := NewErrorWriter(cnf); err == nil {
 			wts = append(wts, w)
 		} else {
 			return nil, err
 		}
 
-	}
-	if debug {
-		wts = append(wts, writer.NewStdWriter())
 	}
 
 	return writer.NewMultiWriter(wts...), nil

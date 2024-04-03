@@ -363,7 +363,9 @@ func (app *Application) prefixedMsg(msg ...string) string {
 
 func (app *Application) initLogger() (err error) {
 	app.logCnf.SetFilename(app.cluster.id)
-	app.logger, err = logger.NewLogger(app.logCnf, app.debugger.Debug())
+	app.logger, err = logger.NewLogger(app.logCnf, func() bool {
+		return app.debugger.Debug()
+	})
 	if err != nil {
 		return
 	}
