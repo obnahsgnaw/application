@@ -20,11 +20,6 @@ func NewLogger(cnf *Config, debug func() bool) (l *zap.Logger, err error) {
 	var cw = zapcore.Lock(writer.NewDynamicStdWriter(debug, os.Stdout))
 	var cores []zapcore.Core
 
-	consoleEncoderConfig := zap.NewDevelopmentEncoderConfig()
-	consoleEncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	consoleEncoder := zapcore.NewConsoleEncoder(consoleEncoderConfig)
-	cores = append(cores, zapcore.NewCore(consoleEncoder, cw, cnf.GetLevel()))
-
 	if cnf == nil {
 		err = loggerError("log config required")
 		cnf = &Config{}
@@ -43,6 +38,11 @@ func NewLogger(cnf *Config, debug func() bool) (l *zap.Logger, err error) {
 		err = loggerError("trace level is invalid, err=" + err.Error())
 		cnf.traceLevel.SetLevel(zap.ErrorLevel)
 	}
+
+	consoleEncoderConfig := zap.NewDevelopmentEncoderConfig()
+	consoleEncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	consoleEncoder := zapcore.NewConsoleEncoder(consoleEncoderConfig)
+	cores = append(cores, zapcore.NewCore(consoleEncoder, cw, cnf.GetLevel()))
 
 	if dir != "" {
 		jsonEncodeConfig := zap.NewProductionEncoderConfig()
