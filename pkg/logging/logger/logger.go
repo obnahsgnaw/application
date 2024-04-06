@@ -234,7 +234,7 @@ func NewDefAccessWriter(cnf *Config, debug func() bool) (io.Writer, error) {
 func NewDefErrorWriter(cnf *Config, debug func() bool) (io.Writer, error) {
 	var wts []io.Writer
 	wts = append(wts, writer.NewDynamicStdWriter(debug, os.Stderr))
-	if cnf != nil {
+	if cnf != nil && cnf.GetDir() != "" {
 		if w, err := NewErrorWriter(cnf); err == nil {
 			wts = append(wts, w)
 		} else {
