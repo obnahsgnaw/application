@@ -44,6 +44,9 @@ func Logger(config *logger.Config) Option {
 		if config != nil {
 			s.logCnf = config
 			s.logCus = true
+			if err := s.initLogger(); err != nil {
+				panic(err)
+			}
 		}
 	}
 }
