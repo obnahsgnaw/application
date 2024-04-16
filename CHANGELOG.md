@@ -1,4 +1,12 @@
 
+<a name="v0.17.8"></a>
+## [v0.17.8](https://8.140.161.172/wangsb/wgateway/compare/v0.17.7...v0.17.8) (2024-04-16)
+
+### Bug Fixes
+
+* **option:** fix logger option
+
+
 <a name="v0.17.7"></a>
 ## [v0.17.7](https://8.140.161.172/wangsb/wgateway/compare/v0.17.6...v0.17.7) (2024-04-06)
 
