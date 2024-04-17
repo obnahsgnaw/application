@@ -1,4 +1,12 @@
 
+<a name="v0.17.9"></a>
+## [v0.17.9](https://8.140.161.172/wangsb/wgateway/compare/v0.17.8...v0.17.9) (2024-04-17)
+
+### Bug Fixes
+
+* **regcenter:** fix watch
+
+
 <a name="v0.17.8"></a>
 ## [v0.17.8](https://8.140.161.172/wangsb/wgateway/compare/v0.17.7...v0.17.8) (2024-04-16)
 
