@@ -64,7 +64,16 @@ func (e *LocalRegister) Unregister(_ context.Context, key string) error {
 
 func (e *LocalRegister) Watch(_ context.Context, keyPrefix string, handler func(key string, val string, isDel bool)) error {
 	e.watchers[keyPrefix] = append(e.watchers[keyPrefix], handler)
+	e.watchNotify(keyPrefix, handler)
 	return nil
+}
+
+func (e *LocalRegister) watchNotify(keyPrefix string, handler func(key string, val string, isDel bool)) {
+	for k, v := range e.data {
+		if keyPrefix == k || strings.HasPrefix(k, keyPrefix) {
+			handler(k, v.Value, false)
+		}
+	}
 }
 
 func (e *LocalRegister) LastPrefixedIndex(_ context.Context, keyPrefix string, indexParser func(key string) int) (int, error) {
