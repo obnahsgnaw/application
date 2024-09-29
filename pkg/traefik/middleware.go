@@ -495,7 +495,7 @@ func NewHttpAuth(name string, conf AuthConf) (m HttpMiddleware) {
 traefik/http/middlewares/Middleware09/forwardBody/requestAddress	http://xxxx
 traefik/http/middlewares/Middleware09/forwardBody/responseAddress	http://xxxx
 */
-func NewForwardBody(name, rqAddr, rpAddr string, requestHeaders, responseHeaders []string) (m HttpMiddleware) {
+func NewForwardBody(name, rqAddr, rpAddr string, requestHeaders, responseHeaders, ignoreUris []string) (m HttpMiddleware) {
 	m.name = name
 	m.kvs = make(map[string]string)
 	if rqAddr != "" {
@@ -509,6 +509,9 @@ func NewForwardBody(name, rqAddr, rpAddr string, requestHeaders, responseHeaders
 	}
 	for i, k := range responseHeaders {
 		m.kvs[EtcdKey(httpMidPrefix, name, "forwardBody/responseHeaders", strconv.Itoa(i))] = k
+	}
+	for i, k := range ignoreUris {
+		m.kvs[EtcdKey(httpMidPrefix, name, "forwardBody/ignoreUris", strconv.Itoa(i))] = k
 	}
 	m.kvs[EtcdKey(httpMidPrefix, name, "forwardBody/trustForwardHeader")] = "true"
 	return
