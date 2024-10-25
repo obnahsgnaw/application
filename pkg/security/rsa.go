@@ -7,8 +7,10 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/pem"
 	"github.com/obnahsgnaw/application/pkg/utils"
+	"strings"
 )
 
 /*
@@ -36,18 +38,22 @@ var (
 	ErrPublicKeyParseError  = SecErr("public key parse failed")
 	ErrPublicKeyError       = SecErr("public key error")
 	ErrPrivateKeyParseError = SecErr("private key parse failed")
-	ErrNoEncData            = SecErr("no encrypt data")
-	ErrNoDecData            = SecErr("no decrypt data")
+	ErrBitTooShort          = SecErr("bits too short")
+	ErrBitTooLong           = SecErr("bits too long")
 )
 
 func SecErr(msg string) error {
 	return utils.TitledError("security error", msg, nil)
 }
 
-// Generate generate rsa private key and public key size: 密钥位数bit，加密的message不能比密钥长 (size/8 -11)
-func (rc *RsaCrypto) Generate(size int) (privateKey []byte, publicKey []byte, err error) {
+// Generate rsa private key and public key size: 密钥位数bit，加密的message不能比密钥长 (size/8 -11)
+func (rc *RsaCrypto) Generate(bits int) (privateKey []byte, publicKey []byte, err error) {
+	if bits < 512 {
+		err = ErrBitTooShort
+		return
+	}
 	var paKey *rsa.PrivateKey
-	paKey, err = rsa.GenerateKey(rand.Reader, size)
+	paKey, err = rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
 		return
 	}
@@ -82,69 +88,62 @@ func (rc *RsaCrypto) Generate(size int) (privateKey []byte, publicKey []byte, er
 }
 
 // Encrypt public key encrypt
-func (rc *RsaCrypto) Encrypt(data []byte, pubKey []byte, b64 bool) (encrypted []byte, err error) {
+func (rc *RsaCrypto) Encrypt(data []byte, pubKey []byte, _ bool) (encrypted []byte, err error) {
 	if len(data) == 0 {
-		err = ErrNoEncData
 		return
 	}
 	if !rc.disable {
 		var publicKey *rsa.PublicKey
+		var chunkData []byte
 		if publicKey, err = getPublicKey(pubKey); err != nil {
 			return
 		}
-
-		maxLen := publicKey.N.BitLen()/8 - 11
+		maxLen := publicKey.N.BitLen()/8 - 11 // EncryptPKCS1v15 11位填充
+		if maxLen < 0 {
+			err = ErrBitTooShort
+			return
+		}
 		chunks := split(data, maxLen)
 		buffer := bytes.NewBufferString("")
 		for _, chunk := range chunks {
-			chunkData, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, chunk)
-			if err != nil {
-				return encrypted, err
+			if chunkData, err = rsa.EncryptPKCS1v15(rand.Reader, publicKey, chunk); err != nil {
+				return
 			}
 			buffer.Write(chunkData)
 		}
-
 		encrypted = buffer.Bytes()
 	} else {
 		encrypted = data
 	}
-
-	if b64 {
-		encrypted = []byte(RsaEncoding.EncodeToString(encrypted))
-	}
+	encrypted = []byte(strings.ToUpper(hex.EncodeToString(encrypted)))
 
 	return
 }
 
 // Decrypt private key decrypt
-func (rc *RsaCrypto) Decrypt(encrypted []byte, priKey []byte, b64 bool) (data []byte, err error) {
+func (rc *RsaCrypto) Decrypt(encrypted []byte, priKey []byte, _ bool) (data []byte, err error) {
 	if len(encrypted) == 0 {
-		err = ErrNoDecData
 		return
 	}
-	if b64 {
-		if encrypted, err = RsaEncoding.DecodeString(string(encrypted)); err != nil {
-			return
-		}
+	if encrypted, err = hex.DecodeString(string(encrypted)); err != nil {
+		return
 	}
 
 	if !rc.disable {
 		var privateKey *rsa.PrivateKey
+		var chunkData []byte
 		if privateKey, err = getPrivateKey(priKey); err != nil {
 			return
 		}
-
 		maxLen := privateKey.PublicKey.N.BitLen() / 8
 		chunks := split(encrypted, maxLen)
 		buffer := bytes.NewBufferString("")
 		for _, chunk := range chunks {
-			chunkData, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, chunk)
-			if err != nil {
-				return data, err
+			if chunkData, err = rsa.DecryptPKCS1v15(rand.Reader, privateKey, chunk); err != nil {
+				return
 			}
 			buffer.Write(chunkData)
 		}
-
 		data = buffer.Bytes()
 	} else {
 		data = encrypted
@@ -154,65 +153,68 @@ func (rc *RsaCrypto) Decrypt(encrypted []byte, priKey []byte, b64 bool) (data []
 }
 
 // Sign Private key sign
-func (rc *RsaCrypto) Sign(data []byte, priKey []byte, b64 bool) (signature []byte, err error) {
-	privateKey, err := getPrivateKey(priKey)
-	if err != nil {
+func (rc *RsaCrypto) Sign(data []byte, priKey []byte, _ bool) (signature []byte, err error) {
+	if len(data) == 0 {
 		return
 	}
 
-	maxLen := privateKey.PublicKey.N.BitLen() / 8
+	var privateKey *rsa.PrivateKey
+	var hashed []byte
+	var chunkData []byte
+	if privateKey, err = getPrivateKey(priKey); err != nil {
+		return
+	}
+	maxLen := privateKey.PublicKey.N.BitLen()/8 - 11 - SignHash.Size()
+	if maxLen < 0 {
+		err = ErrBitTooShort
+		return
+	}
 	chunks := split(data, maxLen)
 	buffer := bytes.NewBufferString("")
 	for _, chunk := range chunks {
-		hashed, err1 := Hash(chunk, SignHash)
-		if err1 != nil {
+		if hashed, err = Hash(chunk, SignHash); err != nil {
 			return
 		}
-
-		chunkData, err2 := rsa.SignPKCS1v15(rand.Reader, privateKey, SignHash, hashed)
-		if err2 != nil {
+		if chunkData, err = rsa.SignPKCS1v15(rand.Reader, privateKey, SignHash, hashed); err != nil {
 			return
 		}
 		buffer.Write(chunkData)
 	}
 
 	signature = buffer.Bytes()
-
-	if b64 {
-		signature = []byte(RsaEncoding.EncodeToString(signature))
-	}
+	signature = []byte(hex.EncodeToString(signature))
 
 	return
 }
 
 // Verify Public key verify
-func (rc *RsaCrypto) Verify(data, signature, pubKey []byte, b64 bool) error {
-	var err error
-	if b64 {
-		if signature, err = RsaEncoding.DecodeString(string(signature)); err != nil {
-			return err
-		}
+func (rc *RsaCrypto) Verify(data, signature, pubKey []byte, _ bool) (err error) {
+	if len(data) == 0 {
+		return
 	}
 
-	publicKey, err := getPublicKey(pubKey)
-	if err != nil {
-		return err
+	if signature, err = hex.DecodeString(string(signature)); err != nil {
+		return
 	}
 
+	var publicKey *rsa.PublicKey
+	if publicKey, err = getPublicKey(pubKey); err != nil {
+		return
+	}
+
+	var hashed []byte
 	maxLen := publicKey.N.BitLen() / 8
 	chunks := split(data, maxLen)
 	for _, chunk := range chunks {
-		hashed, err1 := Hash(chunk, SignHash)
-		if err1 != nil {
-			return err1
+		if hashed, err = Hash(chunk, SignHash); err != nil {
+			return
 		}
-		err = rsa.VerifyPKCS1v15(publicKey, SignHash, hashed, signature)
-		if err != nil {
+		if err = rsa.VerifyPKCS1v15(publicKey, SignHash, hashed, signature); err != nil {
 			return err
 		}
 	}
 
-	return nil
+	return
 }
 
 func (rc *RsaCrypto) Disable() {
@@ -255,7 +257,7 @@ func getPrivateKey(sk []byte) (privateKey *rsa.PrivateKey, err error) {
 	return
 }
 
-// split  split rsa message block
+// split rsa message block
 func split(buf []byte, lim int) [][]byte {
 	var chunk []byte
 	chunks := make([][]byte, 0, len(buf)/lim+1)

@@ -97,7 +97,6 @@ func (e *EsCrypto) Disable() {
 
 func (e *EsCrypto) Encrypt(data, key []byte, _ bool) (encrypted, iv []byte, err error) {
 	if len(data) == 0 {
-		err = ErrNoEncData
 		return
 	}
 	if !e.disable {
@@ -123,7 +122,6 @@ func (e *EsCrypto) Encrypt(data, key []byte, _ bool) (encrypted, iv []byte, err 
 
 func (e *EsCrypto) Decrypt(encrypted, key, iv []byte, _ bool) (data []byte, err error) {
 	if len(encrypted) == 0 {
-		err = ErrNoDecData
 		return
 	}
 	var block cipher.Block
