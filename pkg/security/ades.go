@@ -6,7 +6,9 @@ import (
 	"crypto/cipher"
 	"crypto/des"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -93,7 +95,7 @@ func (e *EsCrypto) Disable() {
 	e.disable = true
 }
 
-func (e *EsCrypto) Encrypt(data, key []byte, b64 bool) (encrypted, iv []byte, err error) {
+func (e *EsCrypto) Encrypt(data, key []byte, _ bool) (encrypted, iv []byte, err error) {
 	if len(data) == 0 {
 		err = ErrNoEncData
 		return
@@ -105,7 +107,7 @@ func (e *EsCrypto) Encrypt(data, key []byte, b64 bool) (encrypted, iv []byte, er
 			return
 		}
 		iv = e.t.RandIv()
-		if block, err = e.getModeBlock(esBlock, iv); err != nil {
+		if block, err = e.getModeBlock(esBlock, iv, true); err != nil {
 			return
 		}
 		padData := pkcs7Padding(data, block.BlockSize())
@@ -115,14 +117,11 @@ func (e *EsCrypto) Encrypt(data, key []byte, b64 bool) (encrypted, iv []byte, er
 	} else {
 		encrypted = data
 	}
-
-	if b64 {
-		encrypted = []byte(EsEncoding.EncodeToString(encrypted))
-	}
+	encrypted = []byte(strings.ToUpper(hex.EncodeToString(encrypted)))
 	return
 }
 
-func (e *EsCrypto) Decrypt(encrypted, key, iv []byte, b64 bool) (data []byte, err error) {
+func (e *EsCrypto) Decrypt(encrypted, key, iv []byte, _ bool) (data []byte, err error) {
 	if len(encrypted) == 0 {
 		err = ErrNoDecData
 		return
@@ -130,16 +129,14 @@ func (e *EsCrypto) Decrypt(encrypted, key, iv []byte, b64 bool) (data []byte, er
 	var block cipher.Block
 	var esBlock *Block
 	var cryptData []byte
-	if b64 {
-		if encrypted, err = EsEncoding.DecodeString(string(cryptData)); err != nil {
-			return
-		}
+	if cryptData, err = hex.DecodeString(string(encrypted)); err != nil {
+		return
 	}
 	if !e.disable {
 		if esBlock, err = e.getEsBlock(key); err != nil {
 			return
 		}
-		if block, err = e.getModeBlock(esBlock, iv); err != nil {
+		if block, err = e.getModeBlock(esBlock, iv, false); err != nil {
 			return
 		}
 
@@ -180,9 +177,9 @@ func (e *EsCrypto) getEsBlock(key []byte) (block *Block, err error) {
 	}
 }
 
-func (e *EsCrypto) getModeBlock(block *Block, iv []byte) (b cipher.Block, err error) {
+func (e *EsCrypto) getModeBlock(block *Block, iv []byte, enc bool) (b cipher.Block, err error) {
 	if e.m == CbcMode {
-		b, err = block.CbcBlock(iv)
+		b, err = block.CbcBlock(iv, enc)
 	} else {
 		err = ErrModeNotSupport
 	}
@@ -210,11 +207,14 @@ type Block struct {
 }
 
 // CbcBlock key长度 aes=16,24,32, des=8 ;  iv长度 des=8 aes=16
-func (b *Block) CbcBlock(iv []byte) (cipher.Block, error) {
+func (b *Block) CbcBlock(iv []byte, enc bool) (cipher.Block, error) {
 	if len(iv) != b.cb.BlockSize() {
 		return nil, ErrIvLengthError
 	}
-	return newModeBlock(cipher.NewCBCEncrypter(b.cb, iv)), nil
+	if enc {
+		return newModeBlock(cipher.NewCBCEncrypter(b.cb, iv)), nil
+	}
+	return newModeBlock(cipher.NewCBCDecrypter(b.cb, iv)), nil
 }
 
 func (b *Block) Block() cipher.Block {
@@ -230,6 +230,7 @@ func Aes192Block(key [24]byte) (*Block, error) {
 func Aes256Block(key [32]byte) (*Block, error) {
 	return AesBlock(key[:])
 }
+
 func AesBlock(key []byte) (*Block, error) {
 	b, err := aes.NewCipher(key)
 	if err != nil {
