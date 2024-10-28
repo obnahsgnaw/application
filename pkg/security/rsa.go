@@ -182,7 +182,7 @@ func (rc *RsaCrypto) Sign(data []byte, priKey []byte, _ bool) (signature []byte,
 	}
 
 	signature = buffer.Bytes()
-	signature = []byte(hex.EncodeToString(signature))
+	signature = []byte(strings.ToUpper(hex.EncodeToString(signature)))
 
 	return
 }
