@@ -59,23 +59,23 @@ func TestRsa(t *testing.T) {
 		t.Fatal(err)
 		return
 	}
-	println(len(encrypted))
-	println(string(encrypted))
+	println("encrypted len:", len(encrypted))
+	println("encrypted:", string(encrypted))
 
 	decrypted, err := rsa.Decrypt(encrypted, []byte(pri), true)
 	if err != nil {
 		t.Fatal(err)
 		return
 	}
-	println(string(decrypted))
+	println("decrypted:", string(decrypted))
 
 	sign, err := rsa.Sign([]byte("this"), []byte(pri), true)
 	if err != nil {
 		t.Fatal(err)
 		return
 	}
-	println(len(sign))
-	println(string(sign))
+	println("sign len:", len(sign))
+	println("sign:", string(sign))
 
 	err = rsa.Verify([]byte("this"), sign, []byte(pub), true)
 	if err != nil {
