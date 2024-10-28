@@ -1,4 +1,36 @@
 
+<a name="v0.17.13"></a>
+## [v0.17.13](https://8.140.161.172/wangsb/wgateway/compare/v0.17.12...v0.17.13) (2024-10-28)
+
+### Performance Improvements
+
+* **ras:** perf rsa out format
+
+
+<a name="v0.17.12"></a>
+## [v0.17.12](https://8.140.161.172/wangsb/wgateway/compare/v0.17.11...v0.17.12) (2024-10-26)
+
+### Bug Fixes
+
+* **security:** fix rsa
+
+
+<a name="v0.17.11"></a>
+## [v0.17.11](https://8.140.161.172/wangsb/wgateway/compare/v0.17.10...v0.17.11) (2024-10-25)
+
+### Bug Fixes
+
+* **security aes:** fix decrypt
+
+
+<a name="v0.17.10"></a>
+## [v0.17.10](https://8.140.161.172/wangsb/wgateway/compare/v0.17.9...v0.17.10) (2024-09-29)
+
+### Bug Fixes
+
+* **pkg:** traefik mid
+
+
 <a name="v0.17.9"></a>
 ## [v0.17.9](https://8.140.161.172/wangsb/wgateway/compare/v0.17.8...v0.17.9) (2024-04-17)
 
