@@ -1,4 +1,12 @@
 
+<a name="v0.17.14"></a>
+## [v0.17.14](https://8.140.161.172/wangsb/wgateway/compare/v0.17.13...v0.17.14) (2024-10-29)
+
+### Performance Improvements
+
+* **security:** perf encode
+
+
 <a name="v0.17.13"></a>
 ## [v0.17.13](https://8.140.161.172/wangsb/wgateway/compare/v0.17.12...v0.17.13) (2024-10-28)
 
