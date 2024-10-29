@@ -8,7 +8,7 @@ import (
 
 var (
 	B64Encoding = base64.StdEncoding
-	hexEncoding = HexEncoding{}
+	HexEncoding = HexEncoder{}
 )
 
 type Encoder interface {
@@ -16,12 +16,12 @@ type Encoder interface {
 	DecodeString(string) ([]byte, error)
 }
 
-type HexEncoding struct{}
+type HexEncoder struct{}
 
-func (HexEncoding) EncodeToString(data []byte) string {
+func (HexEncoder) EncodeToString(data []byte) string {
 	return strings.ToUpper(hex.EncodeToString(data))
 }
 
-func (HexEncoding) DecodeString(data string) ([]byte, error) {
+func (HexEncoder) DecodeString(data string) ([]byte, error) {
 	return hex.DecodeString(data)
 }
