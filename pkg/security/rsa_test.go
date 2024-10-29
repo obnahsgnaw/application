@@ -4,7 +4,7 @@ import "testing"
 
 func TestRsa(t *testing.T) {
 	rsa := NewRsa()
-	pri, pub, err := rsa.Generate(512)
+	pri, pub, err := rsa.Generate(2048)
 	if err != nil {
 		t.Error(err)
 		return
@@ -67,6 +67,7 @@ func TestRsa(t *testing.T) {
 		t.Fatal(err)
 		return
 	}
+	println("decrypted len:", len(decrypted))
 	println("decrypted:", string(decrypted))
 
 	sign, err := rsa.Sign([]byte("this"), []byte(pri), true)

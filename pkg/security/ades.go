@@ -5,10 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/des"
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
-	"strings"
 	"sync"
 )
 
@@ -24,7 +21,6 @@ AES主要有五种工作模式(其实还有很多模式) ：
 */
 
 var (
-	EsEncoding        = base64.StdEncoding
 	ErrIvLengthError  = SecErr(fmt.Sprintf("security error: iv size error, aes=%d, des=%d", aes.BlockSize, des.BlockSize))
 	ErrModeNotSupport = SecErr("mode not support now")
 )
@@ -72,6 +68,7 @@ type EsCrypto struct {
 	aesBlocks sync.Map
 	desBlocks sync.Map
 	disable   bool
+	encoder   Encoder
 }
 
 func NewEsCrypto(esType EsType, mode EsMode) *EsCrypto {
@@ -80,6 +77,7 @@ func NewEsCrypto(esType EsType, mode EsMode) *EsCrypto {
 		m:         mode,
 		aesBlocks: sync.Map{},
 		desBlocks: sync.Map{},
+		encoder:   B64Encoding,
 	}
 }
 
@@ -95,7 +93,11 @@ func (e *EsCrypto) Disable() {
 	e.disable = true
 }
 
-func (e *EsCrypto) Encrypt(data, key []byte, _ bool) (encrypted, iv []byte, err error) {
+func (e *EsCrypto) SetEncoder(encoder Encoder) {
+	e.encoder = encoder
+}
+
+func (e *EsCrypto) Encrypt(data, key []byte, encode bool) (encrypted, iv []byte, err error) {
 	if len(data) == 0 {
 		return
 	}
@@ -116,19 +118,23 @@ func (e *EsCrypto) Encrypt(data, key []byte, _ bool) (encrypted, iv []byte, err 
 	} else {
 		encrypted = data
 	}
-	encrypted = []byte(strings.ToUpper(hex.EncodeToString(encrypted)))
+	if encode {
+		encrypted = []byte(e.encoder.EncodeToString(encrypted))
+	}
 	return
 }
 
-func (e *EsCrypto) Decrypt(encrypted, key, iv []byte, _ bool) (data []byte, err error) {
+func (e *EsCrypto) Decrypt(encrypted, key, iv []byte, decode bool) (data []byte, err error) {
 	if len(encrypted) == 0 {
 		return
 	}
 	var block cipher.Block
 	var esBlock *Block
 	var cryptData []byte
-	if cryptData, err = hex.DecodeString(string(encrypted)); err != nil {
-		return
+	if decode {
+		if cryptData, err = e.encoder.DecodeString(string(encrypted)); err != nil {
+			return
+		}
 	}
 	if !e.disable {
 		if esBlock, err = e.getEsBlock(key); err != nil {
