@@ -6,11 +6,8 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/base64"
-	"encoding/hex"
 	"encoding/pem"
 	"github.com/obnahsgnaw/application/pkg/utils"
-	"strings"
 )
 
 /*
@@ -24,26 +21,29 @@ RSA:
 // RsaCrypto rsa
 type RsaCrypto struct {
 	disable bool
+	encoder Encoder
 }
 
 func NewRsa() *RsaCrypto {
-	return &RsaCrypto{}
+	return &RsaCrypto{encoder: B64Encoding}
 }
 
 type RsaType int
 
 var (
 	SignHash                = crypto.SHA256
-	RsaEncoding             = base64.StdEncoding
 	ErrPublicKeyParseError  = SecErr("public key parse failed")
 	ErrPublicKeyError       = SecErr("public key error")
 	ErrPrivateKeyParseError = SecErr("private key parse failed")
 	ErrBitTooShort          = SecErr("bits too short")
-	ErrBitTooLong           = SecErr("bits too long")
 )
 
 func SecErr(msg string) error {
 	return utils.TitledError("security error", msg, nil)
+}
+
+func (rc *RsaCrypto) SetEncoder(encoder Encoder) {
+	rc.encoder = encoder
 }
 
 // Generate rsa private key and public key size: 密钥位数bit，加密的message不能比密钥长 (size/8 -11)
@@ -88,7 +88,7 @@ func (rc *RsaCrypto) Generate(bits int) (privateKey []byte, publicKey []byte, er
 }
 
 // Encrypt public key encrypt
-func (rc *RsaCrypto) Encrypt(data []byte, pubKey []byte, _ bool) (encrypted []byte, err error) {
+func (rc *RsaCrypto) Encrypt(data []byte, pubKey []byte, encode bool) (encrypted []byte, err error) {
 	if len(data) == 0 {
 		return
 	}
@@ -115,18 +115,22 @@ func (rc *RsaCrypto) Encrypt(data []byte, pubKey []byte, _ bool) (encrypted []by
 	} else {
 		encrypted = data
 	}
-	encrypted = []byte(strings.ToUpper(hex.EncodeToString(encrypted)))
+	if encode {
+		encrypted = []byte(rc.encoder.EncodeToString(encrypted))
+	}
 
 	return
 }
 
 // Decrypt private key decrypt
-func (rc *RsaCrypto) Decrypt(encrypted []byte, priKey []byte, _ bool) (data []byte, err error) {
+func (rc *RsaCrypto) Decrypt(encrypted []byte, priKey []byte, decode bool) (data []byte, err error) {
 	if len(encrypted) == 0 {
 		return
 	}
-	if encrypted, err = hex.DecodeString(string(encrypted)); err != nil {
-		return
+	if decode {
+		if encrypted, err = rc.encoder.DecodeString(string(encrypted)); err != nil {
+			return
+		}
 	}
 
 	if !rc.disable {
@@ -153,7 +157,7 @@ func (rc *RsaCrypto) Decrypt(encrypted []byte, priKey []byte, _ bool) (data []by
 }
 
 // Sign Private key sign
-func (rc *RsaCrypto) Sign(data []byte, priKey []byte, _ bool) (signature []byte, err error) {
+func (rc *RsaCrypto) Sign(data []byte, priKey []byte, encode bool) (signature []byte, err error) {
 	if len(data) == 0 {
 		return
 	}
@@ -182,19 +186,23 @@ func (rc *RsaCrypto) Sign(data []byte, priKey []byte, _ bool) (signature []byte,
 	}
 
 	signature = buffer.Bytes()
-	signature = []byte(strings.ToUpper(hex.EncodeToString(signature)))
+	if encode {
+		signature = []byte(rc.encoder.EncodeToString(signature))
+	}
 
 	return
 }
 
 // Verify Public key verify
-func (rc *RsaCrypto) Verify(data, signature, pubKey []byte, _ bool) (err error) {
+func (rc *RsaCrypto) Verify(data, signature, pubKey []byte, decode bool) (err error) {
 	if len(data) == 0 {
 		return
 	}
 
-	if signature, err = hex.DecodeString(string(signature)); err != nil {
-		return
+	if decode {
+		if signature, err = rc.encoder.DecodeString(string(signature)); err != nil {
+			return
+		}
 	}
 
 	var publicKey *rsa.PublicKey
