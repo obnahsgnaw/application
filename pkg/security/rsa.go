@@ -211,13 +211,19 @@ func (rc *RsaCrypto) Verify(data, signature, pubKey []byte, decode bool) (err er
 	}
 
 	var hashed []byte
-	maxLen := publicKey.N.BitLen() / 8
+	maxLen := publicKey.N.BitLen()/8 - 11 - SignHash.Size()
+	if maxLen < 0 {
+		err = ErrBitTooShort
+		return
+	}
 	chunks := split(data, maxLen)
-	for _, chunk := range chunks {
+	signLen := len(signature) / len(chunks)
+	for i, chunk := range chunks {
 		if hashed, err = Hash(chunk, SignHash); err != nil {
 			return
 		}
-		if err = rsa.VerifyPKCS1v15(publicKey, SignHash, hashed, signature); err != nil {
+		chunkSign := signature[i*signLen : i*signLen+signLen]
+		if err = rsa.VerifyPKCS1v15(publicKey, SignHash, hashed, chunkSign); err != nil {
 			return err
 		}
 	}

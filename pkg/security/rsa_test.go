@@ -70,7 +70,7 @@ func TestRsa(t *testing.T) {
 	println("decrypted len:", len(decrypted))
 	println("decrypted:", string(decrypted))
 
-	sign, err := rsa.Sign([]byte("this"), []byte(pri), true)
+	sign, err := rsa.Sign([]byte("thisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthis"), []byte(pri), true)
 	if err != nil {
 		t.Fatal(err)
 		return
@@ -78,7 +78,7 @@ func TestRsa(t *testing.T) {
 	println("sign len:", len(sign))
 	println("sign:", string(sign))
 
-	err = rsa.Verify([]byte("this"), sign, []byte(pub), true)
+	err = rsa.Verify([]byte("thisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthisthis"), sign, []byte(pub), true)
 	if err != nil {
 		t.Fatal(err)
 		return
