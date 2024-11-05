@@ -130,9 +130,8 @@ func (e *EsCrypto) Decrypt(encrypted, key, iv []byte, decode bool) (data []byte,
 	}
 	var block cipher.Block
 	var esBlock *Block
-	var cryptData []byte
 	if decode {
-		if cryptData, err = e.encoder.DecodeString(string(encrypted)); err != nil {
+		if encrypted, err = e.encoder.DecodeString(string(encrypted)); err != nil {
 			return
 		}
 	}
@@ -144,8 +143,8 @@ func (e *EsCrypto) Decrypt(encrypted, key, iv []byte, decode bool) (data []byte,
 			return
 		}
 
-		decryptData := make([]byte, len(cryptData))
-		block.Decrypt(decryptData, cryptData)
+		decryptData := make([]byte, len(encrypted))
+		block.Decrypt(decryptData, encrypted)
 
 		data = pkcs7UnPadding(decryptData)
 	} else {
