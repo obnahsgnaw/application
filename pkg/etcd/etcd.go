@@ -64,9 +64,9 @@ func KeepAlive(ctx context.Context, c *clientv3.Client, leaseId clientv3.LeaseID
 	go func() {
 		for {
 			select {
+			case _ = <-alive:
 			case <-ctx.Done():
 				return
-			case _ = <-alive:
 			}
 		}
 	}()
