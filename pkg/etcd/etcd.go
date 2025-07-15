@@ -64,9 +64,14 @@ func KeepAlive(ctx context.Context, c *clientv3.Client, leaseId clientv3.LeaseID
 	go func() {
 		for {
 			select {
-			case _ = <-alive:
+			case _, ok := <-alive:
+				if !ok {
+					return
+				}
 			case <-ctx.Done():
 				return
+			case <-time.After(time.Second * 10):
+
 			}
 		}
 	}()
@@ -132,6 +137,7 @@ func Watch(ctx context.Context, c *clientv3.Client, key string, prefixed bool, o
 						}
 					}
 				}
+			case <-time.After(time.Second * 10):
 
 			}
 		}
