@@ -1,4 +1,44 @@
 
+<a name="v0.17.19"></a>
+## [v0.17.19](https://8.140.161.172/wangsb/wgateway/compare/v0.17.18...v0.17.19) (2025-07-15)
+
+### Bug Fixes
+
+* **etcd:** fix watch
+
+
+<a name="v0.17.18"></a>
+## [v0.17.18](https://8.140.161.172/wangsb/wgateway/compare/v0.17.17...v0.17.18) (2025-05-26)
+
+### Code Refactoring
+
+* **x:** x
+
+
+<a name="v0.17.17"></a>
+## [v0.17.17](https://8.140.161.172/wangsb/wgateway/compare/v0.17.16...v0.17.17) (2025-05-26)
+
+### Performance Improvements
+
+* **etcd:** perf pkg etcd
+
+
+<a name="v0.17.16"></a>
+## [v0.17.16](https://8.140.161.172/wangsb/wgateway/compare/v0.17.15...v0.17.16) (2024-11-05)
+
+### Performance Improvements
+
+* **security:** perf aes encode
+
+
+<a name="v0.17.15"></a>
+## [v0.17.15](https://8.140.161.172/wangsb/wgateway/compare/v0.17.14...v0.17.15) (2024-10-29)
+
+### Bug Fixes
+
+* **x:** x
+
+
 <a name="v0.17.14"></a>
 ## [v0.17.14](https://8.140.161.172/wangsb/wgateway/compare/v0.17.13...v0.17.14) (2024-10-29)
 
